@@ -94,7 +94,9 @@ public class ScannerTest {
 	@Test
 	public void testLookupToken() {
 		
-		testComment();		
+		testComment_1();
+		testComment_2();
+		testComment_3();
 		testFileBegin();		
 		testFileEnd();		
 		testVarDecl_1();
@@ -746,12 +748,40 @@ public class ScannerTest {
 		}
 	}
 
-	private void testComment() {
+	private void testComment_1() {
 		Scanner s = new Scanner("BTW");
 		Token t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.comment, t);
+				Assert.assertEquals(TokenTable.comment_1, t);
+			} else {
+				fail("No token found :(");
+			}
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void testComment_2() {
+		Scanner s = new Scanner("OBTW");
+		Token t = null;
+		try {
+			if((t = s.lookupToken()) != null) {
+				Assert.assertEquals(TokenTable.comment_2, t);
+			} else {
+				fail("No token found :(");
+			}
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void testComment_3() {
+		Scanner s = new Scanner("TLDR");
+		Token t = null;
+		try {
+			if((t = s.lookupToken()) != null) {
+				Assert.assertEquals(TokenTable.comment_3, t);
 			} else {
 				fail("No token found :(");
 			}

@@ -28,9 +28,11 @@ public class TokenTable {
 	
 	// increase token count if new keyword tokens are defined
 	// (doesn't include string, identifier and integer token)
-	public static final int TOKEN_COUNT = 48;
+	public static final int TOKEN_COUNT = 50;
 
-	public static final Token comment = new Token("BTW");
+	public static final Token comment_1 = new Token("BTW");
+	public static final Token comment_2 = new Token("OBTW");
+	public static final Token comment_3 = new Token("TLDR");
 	public static final Token file_begin = new Token("HAI");
 	public static final Token file_end = new Token("KTHXBYE");
 	public static final Token var_decl_1 = new Token("I");

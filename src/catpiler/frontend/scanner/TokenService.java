@@ -59,7 +59,7 @@ public class TokenService {
 		potToken_count = TokenTable.TOKEN_COUNT;
 		
 		arrayOfPotentialTokens = new Token[TokenTable.TOKEN_COUNT];
-		arrayOfPotentialTokens[0] = TokenTable.comment;
+		arrayOfPotentialTokens[0] = TokenTable.comment_1;
 		arrayOfPotentialTokens[1] = TokenTable.file_begin;
 		arrayOfPotentialTokens[2] = TokenTable.file_end;
 		arrayOfPotentialTokens[3] = TokenTable.var_decl_1;
@@ -107,6 +107,8 @@ public class TokenService {
 		arrayOfPotentialTokens[45] = TokenTable.function_end_3;
 		arrayOfPotentialTokens[46] = TokenTable.function_end_4;
 		arrayOfPotentialTokens[47] = TokenTable.whitespace;
+		arrayOfPotentialTokens[48] = TokenTable.comment_2;
+		arrayOfPotentialTokens[49] = TokenTable.comment_3;
 		
 	}
 	

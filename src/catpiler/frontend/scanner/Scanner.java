@@ -170,6 +170,11 @@ public class Scanner {
 			t.setAttribute(new String(current_token));
 		} else if(t.equals(TokenTable.integer)) {
 			t.setAttribute(new String(current_token));
+		} else if(t.equals(TokenTable.comment_1)) {
+			// skip until next LF '\n'
+			eraseComment(false);
+		} else if(t.equals(TokenTable.comment_2)) {
+			eraseComment(true);
 		}
 		
 		// return token
@@ -188,12 +193,52 @@ public class Scanner {
 		return false;
 	}
 	
+	private void eraseComment(boolean multipleLines) {
+		if(!multipleLines) {
+			while(src_pointer < source.length && source[src_pointer] != '\n') {
+				src_pointer++;
+				if(readWhiteSpace()) {
+					whitespace_count++;
+				}
+			}
+		} else {
+			whitespace_count = 0;
+			while(src_pointer < source.length) {
+//				while(readWhiteSpace()) {
+//					src_pointer++;
+//					whitespace_count++;
+//				}
+				try {
+					if(lookupToken().equals(TokenTable.comment_3)) {
+						// found the end
+//						src_pointer = src_pointer + whitespace_count;
+						whitespace_count = 0;
+						return;
+					}
+				} catch (SyntaxException e) {
+					// don't care about SyntaxExceptions in the comment
+				}
+//				src_pointer++;
+//				if(readWhiteSpace()) {
+//					whitespace_count++;
+//				}
+			}
+		}
+	}
+	
 	/**
 	 * returns true if the end of the string is reached
 	 * @return
 	 */
 	private boolean readEOS() {
 		if(src_pointer >= source.length || source[src_pointer] == '\0') {
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean readEOL() {
+		if(src_pointer < source.length || source[src_pointer] == '\n') {
 			return true;
 		}
 		return false;
@@ -242,25 +287,42 @@ public class Scanner {
 	}
 	
 	public static void main(String[] args) {
-		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
-		Token[] tokens = null;
-		try {
-			if((tokens = s.search4Tokens()) != null) {
-				Assert.assertEquals(TokenTable.id , tokens[0]);
-				Assert.assertEquals(TokenTable.id , tokens[1]);
-				Assert.assertEquals(TokenTable.string , tokens[2]);
-				Assert.assertEquals(TokenTable.integer , tokens[3]);
-				Assert.assertEquals(TokenTable.op_eq, tokens[4]);
-				Assert.assertEquals(TokenTable.function_1, tokens[5]);
-				Assert.assertEquals(TokenTable.function_2, tokens[6]);
-				Assert.assertEquals(TokenTable.var_decl_1, tokens[7]);
-				Assert.assertEquals(TokenTable.fc_if_end, tokens[8]);
-				Assert.assertNull(tokens[11]);
-			} else {
-				fail("Could find correct tokens :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
+//		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+//		Token[] tokens = null;
+//		try {
+//			if((tokens = s.search4Tokens()) != null) {
+//				Assert.assertEquals(TokenTable.string , tokens[0]);
+//				Assert.assertEquals(TokenTable.integer , tokens[1]);
+//				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
+//				Assert.assertEquals(TokenTable.function_1, tokens[3]);
+//				Assert.assertEquals(TokenTable.function_2, tokens[4]);
+//				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
+//				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
+//				Assert.assertNull(tokens[11]);
+//			} else {
+//				fail("Could find correct tokens :(");
+//			}
+//		} catch (SyntaxException e) {
+//			e.printStackTrace();
+//		}
+		
+//		Scanner s = new Scanner("OBTW BOTHThisIsAnIdentifier \n anotherID TLDR  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+//		Token[] tokens = null;
+//		try {
+//			if((tokens = s.search4Tokens()) != null) {
+//				Assert.assertEquals(TokenTable.string , tokens[0]);
+//				Assert.assertEquals(TokenTable.integer , tokens[1]);
+//				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
+//				Assert.assertEquals(TokenTable.function_1, tokens[3]);
+//				Assert.assertEquals(TokenTable.function_2, tokens[4]);
+//				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
+//				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
+//				Assert.assertNull(tokens[11]);
+//			} else {
+//				fail("Could find correct tokens :(");
+//			}
+//		} catch (SyntaxException e) {
+//			e.printStackTrace();
+//		}
 	}
 }
