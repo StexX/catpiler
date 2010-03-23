@@ -651,11 +651,11 @@ public class ScannerTest {
 	}
 
 	private void testString() {
-		Scanner s = new Scanner("YARN");
+		Scanner s = new Scanner("CHARZ");
 		Token t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.type_string, t);
+				Assert.assertEquals(TokenTable.type_chararray, t);
 			} else {
 				fail("No token found :(");
 			}
@@ -752,11 +752,10 @@ public class ScannerTest {
 		Scanner s = new Scanner("BTW");
 		Token t = null;
 		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.comment_1, t);
-			} else {
-				fail("No token found :(");
-			}
+			t = s.lookupToken();
+			// Comments will be erased. 
+			// We therefore do not expect any token
+			Assert.assertNull(t);
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 		}
@@ -766,11 +765,10 @@ public class ScannerTest {
 		Scanner s = new Scanner("OBTW");
 		Token t = null;
 		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.comment_2, t);
-			} else {
-				fail("No token found :(");
-			}
+			t = s.lookupToken();
+			// Comments will be erased. 
+			// We therefore do not expect any token
+			Assert.assertNull(t);
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 		}

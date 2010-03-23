@@ -17,6 +17,8 @@
  */
 package catpiler.frontend.scanner;
 
+import java.io.EOFException;
+
 
 /**
  * Outsourcing of Token-Finder, to obtian a better overview.
@@ -66,7 +68,7 @@ public class TokenService {
 		arrayOfPotentialTokens[4] = TokenTable.var_decl_2;
 		arrayOfPotentialTokens[5] = TokenTable.var_decl_3;
 		arrayOfPotentialTokens[6] = TokenTable.var_assign;
-		arrayOfPotentialTokens[7] = TokenTable.type_string;
+		arrayOfPotentialTokens[7] = TokenTable.type_chararray;
 		arrayOfPotentialTokens[8] = TokenTable.type_bool;
 		arrayOfPotentialTokens[9] = TokenTable.type_int;
 		arrayOfPotentialTokens[10] = TokenTable.val_true;
@@ -109,7 +111,11 @@ public class TokenService {
 		arrayOfPotentialTokens[47] = TokenTable.whitespace;
 		arrayOfPotentialTokens[48] = TokenTable.comment_2;
 		arrayOfPotentialTokens[49] = TokenTable.comment_3;
-		
+		arrayOfPotentialTokens[50] = TokenTable.type_char;
+		arrayOfPotentialTokens[51] = TokenTable.type_boolarray;
+		arrayOfPotentialTokens[52] = TokenTable.type_intarray;
+		arrayOfPotentialTokens[53] = TokenTable.struct_begin;
+		arrayOfPotentialTokens[54] = TokenTable.struct_end;
 	}
 	
 	/**
@@ -137,11 +143,14 @@ public class TokenService {
 	 * @param token
 	 * @param pos
 	 * @return
+	 * @throws EOFException 
 	 */
-	public Token lookupToken(char token[], int pos) {
+	public Token lookupToken(char token[], int pos) throws EOFException {
 		int i = 0;
 		Token retToken = null;
-		if (token[0] == '\"') {
+		if(token[0] == '\0') {
+			throw new EOFException();
+		} else if (token[0] == '\"') {
 			// found a string
 			return TokenTable.string;
 		} else if(token[0] >= '0' && token[0] <= '9') {

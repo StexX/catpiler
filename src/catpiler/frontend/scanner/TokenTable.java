@@ -28,7 +28,7 @@ public class TokenTable {
 	
 	// increase token count if new keyword tokens are defined
 	// (doesn't include string, identifier and integer token)
-	public static final int TOKEN_COUNT = 50;
+	public static final int TOKEN_COUNT = 55;
 
 	public static final Token comment_1 = new Token("BTW");
 	public static final Token comment_2 = new Token("OBTW");
@@ -39,7 +39,7 @@ public class TokenTable {
 	public static final Token var_decl_2 = new Token("HAS");
 	public static final Token var_decl_3 = new Token("A");
 	public static final Token var_assign = new Token("R");
-	public static final Token type_string = new Token("YARN");
+	public static final Token type_chararray = new Token("CHARZ");
 	public static final Token type_int = new Token("NUMBR");
 	public static final Token type_bool = new Token("TROOF");
 	public static final Token val_true = new Token("WIN");
@@ -81,8 +81,20 @@ public class TokenTable {
 	public static final Token function_end_4 = new Token("SO");
 	public static final Token whitespace = new Token(" ");
 	
-	// not to be compared with the input...
+	// some extensions...
+	public static final Token struct_begin = new Token("STUFF");
+	public static final Token struct_end = new Token("THATSIT");
+	public static final Token type_char = new Token("CHAR");
+	// I HAS A VAR int_array 
+	// int_array R {1,2,3,4,5} .. dynamic type-switching to NUMBRZ
+	public static final Token type_intarray = new Token("NUMBRZ");
+	public static final Token type_boolarray = new Token("TROOFZ");
+	
+	// The following stuff is just sth. to be provided for the Parser
+	// and not to be compared with the input...
 	public static final Token id = new Token("identifier");
+	// string will be handled as char_array
 	public static final Token string = new Token("string");
+	public static final Token character = new Token("char");
 	public static final Token integer = new Token("int");
 }

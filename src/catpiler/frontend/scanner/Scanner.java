@@ -16,7 +16,7 @@
  * Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 package catpiler.frontend.scanner;
-import static org.junit.Assert.fail;
+import java.io.EOFException;
 
 import org.junit.Assert;
 
@@ -55,13 +55,6 @@ public class Scanner {
 	 */
 	private int token_pointer;
 	
-	/*
-	 * counter for white spaces, to determine
-	 * the correct position in the source 
-	 * after erasing blanks.
-	 */
-	private int whitespace_count;
-	
 	/**
 	 * Initializes the Scanner variables
 	 * @param input
@@ -71,7 +64,6 @@ public class Scanner {
 		src_pointer = 0;
 		current_token = new char[100];
 		token_pointer = 0;
-		whitespace_count = 0;
 	}	
 	
 	/**
@@ -92,7 +84,6 @@ public class Scanner {
 		// erase all the white spaces first
 		while(readWhiteSpace()) {
 			src_pointer++;
-			whitespace_count++;
 		}
 		// read character that is not a whitespace
 		readNextChar();
@@ -100,17 +91,22 @@ public class Scanner {
 		// if more then one tokens have been found, null is returned,
 		// which forces the loop to read another character and try to
 		// detect the token again
-		while((t = tService.lookupToken(current_token, token_pointer)) == null) {
-			token_pointer++;
-			// if the next char is a whitespace, finalize current_token
-			// and loop up token that exactly matches the current_token 
-			// char array
-			// TODO: error handling if no token matches exactly.
-			if(readWhiteSpace()) {
-				current_token[token_pointer+1] = '\0';
-			} else {
-				readNextChar();
+		try {
+			while((t = tService.lookupToken(current_token, token_pointer)) == null) {
+				token_pointer++;
+				// if the next char is a whitespace, finalize current_token
+				// and loop up token that exactly matches the current_token 
+				// char array
+				// TODO: error handling if no token matches exactly.
+				if(readWhiteSpace()) {
+					current_token[token_pointer+1] = '\0';
+				} else {
+					readNextChar();
+				}
 			}
+		} catch (EOFException e) {
+			// reached end of file -> no token found
+			return null;
 		}
 		boolean id = false;
 		// check whether the rest of the characters match the token
@@ -173,8 +169,10 @@ public class Scanner {
 		} else if(t.equals(TokenTable.comment_1)) {
 			// skip until next LF '\n'
 			eraseComment(false);
+			return lookupToken();
 		} else if(t.equals(TokenTable.comment_2)) {
 			eraseComment(true);
+			return lookupToken();
 		}
 		
 		// return token
@@ -187,7 +185,8 @@ public class Scanner {
 	 * @return
 	 */
 	private boolean readWhiteSpace() {
-		if(src_pointer < source.length && source[src_pointer] != '\0' && source[src_pointer] == ' ') {
+		if(src_pointer < source.length && source[src_pointer] != '\0' 
+			&& (source[src_pointer] == ' ' || source[src_pointer] == '\n')) {
 			return true;
 		}
 		return false;
@@ -197,31 +196,18 @@ public class Scanner {
 		if(!multipleLines) {
 			while(src_pointer < source.length && source[src_pointer] != '\n') {
 				src_pointer++;
-				if(readWhiteSpace()) {
-					whitespace_count++;
-				}
 			}
+			src_pointer++;
 		} else {
-			whitespace_count = 0;
 			while(src_pointer < source.length) {
-//				while(readWhiteSpace()) {
-//					src_pointer++;
-//					whitespace_count++;
-//				}
 				try {
 					if(lookupToken().equals(TokenTable.comment_3)) {
 						// found the end
-//						src_pointer = src_pointer + whitespace_count;
-						whitespace_count = 0;
 						return;
 					}
 				} catch (SyntaxException e) {
 					// don't care about SyntaxExceptions in the comment
 				}
-//				src_pointer++;
-//				if(readWhiteSpace()) {
-//					whitespace_count++;
-//				}
 			}
 		}
 	}
@@ -232,13 +218,6 @@ public class Scanner {
 	 */
 	private boolean readEOS() {
 		if(src_pointer >= source.length || source[src_pointer] == '\0') {
-			return true;
-		}
-		return false;
-	}
-	
-	private boolean readEOL() {
-		if(src_pointer < source.length || source[src_pointer] == '\n') {
 			return true;
 		}
 		return false;
@@ -277,17 +256,15 @@ public class Scanner {
 		// the tokens array and moves the src_pointer to the unread
 		// characters
 		while(src_pointer < source.length && (t = lookupToken()) != null) {
-			src_pointer = src_pointer + whitespace_count;
 			tokens[i] = t;
 			i++;
-			whitespace_count = 0;
 		}
 		
 		return tokens;
 	}
 	
 	public static void main(String[] args) {
-//		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+//		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier 1test blafasel anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
 //		Token[] tokens = null;
 //		try {
 //			if((tokens = s.search4Tokens()) != null) {
@@ -324,5 +301,37 @@ public class Scanner {
 //		} catch (SyntaxException e) {
 //			e.printStackTrace();
 //		}
+		
+//		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+//		Token[] tokens = null;
+//		try {
+//			if((tokens = s.search4Tokens()) != null) {
+//				Assert.assertEquals(TokenTable.id , tokens[0]);
+//				Assert.assertEquals(TokenTable.id , tokens[1]);
+//				Assert.assertEquals(TokenTable.string , tokens[2]);
+//				Assert.assertEquals(TokenTable.integer , tokens[3]);
+//				Assert.assertEquals(TokenTable.op_eq, tokens[4]);
+//				Assert.assertEquals(TokenTable.function_1, tokens[5]);
+//				Assert.assertEquals(TokenTable.function_2, tokens[6]);
+//				Assert.assertEquals(TokenTable.var_decl_1, tokens[7]);
+//				Assert.assertEquals(TokenTable.fc_if_end, tokens[8]);
+//				Assert.assertNull(tokens[11]);
+//			} else {
+//				fail("Could find correct tokens :(");
+//			}
+//		} catch (SyntaxException e) {
+//			e.printStackTrace();
+//		}
+		
+		Scanner s = new Scanner("BTW");
+		Token t = null;
+		try {
+			t = s.lookupToken();
+			// Comments will be erased. 
+			// We therefore do not expect any token
+			Assert.assertNull(t);
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+		}
 	}
 }
