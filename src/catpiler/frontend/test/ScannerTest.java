@@ -22,10 +22,60 @@ import static org.junit.Assert.fail;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.sun.org.apache.xpath.internal.operations.And;
+
 import catpiler.frontend.exception.SyntaxException;
 import catpiler.frontend.scanner.Scanner;
-import catpiler.frontend.scanner.Token;
-import catpiler.frontend.scanner.TokenTable;
+import catpiler.frontend.scanner.keywords.A;
+import catpiler.frontend.scanner.keywords.ALL;
+import catpiler.frontend.scanner.keywords.AN;
+import catpiler.frontend.scanner.keywords.ANY;
+import catpiler.frontend.scanner.keywords.BIGGR;
+import catpiler.frontend.scanner.keywords.BOTH;
+import catpiler.frontend.scanner.keywords.CHARZ;
+import catpiler.frontend.scanner.keywords.DIFF;
+import catpiler.frontend.scanner.keywords.DIFFRINT;
+import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.EITHER;
+import catpiler.frontend.scanner.keywords.FAIL;
+import catpiler.frontend.scanner.keywords.HAI;
+import catpiler.frontend.scanner.keywords.HAS;
+import catpiler.frontend.scanner.keywords.HOW;
+import catpiler.frontend.scanner.keywords.I;
+import catpiler.frontend.scanner.keywords.IF;
+import catpiler.frontend.scanner.keywords.IM;
+import catpiler.frontend.scanner.keywords.IN;
+import catpiler.frontend.scanner.keywords.Identifier;
+import catpiler.frontend.scanner.keywords.Int;
+import catpiler.frontend.scanner.keywords.KTHXBYE;
+import catpiler.frontend.scanner.keywords.Keyword;
+import catpiler.frontend.scanner.keywords.LF;
+import catpiler.frontend.scanner.keywords.MEBBE;
+import catpiler.frontend.scanner.keywords.MKAY;
+import catpiler.frontend.scanner.keywords.NO;
+import catpiler.frontend.scanner.keywords.NOT;
+import catpiler.frontend.scanner.keywords.NUMBR;
+import catpiler.frontend.scanner.keywords.OF;
+import catpiler.frontend.scanner.keywords.OIC;
+import catpiler.frontend.scanner.keywords.ORLY;
+import catpiler.frontend.scanner.keywords.OUTTA;
+import catpiler.frontend.scanner.keywords.PRODUKT;
+import catpiler.frontend.scanner.keywords.QUOSHUNT;
+import catpiler.frontend.scanner.keywords.QUOTE;
+import catpiler.frontend.scanner.keywords.R;
+import catpiler.frontend.scanner.keywords.RLY;
+import catpiler.frontend.scanner.keywords.SAEM;
+import catpiler.frontend.scanner.keywords.SAY;
+import catpiler.frontend.scanner.keywords.SMALLR;
+import catpiler.frontend.scanner.keywords.SO;
+import catpiler.frontend.scanner.keywords.SUM;
+import catpiler.frontend.scanner.keywords.TLDR;
+import catpiler.frontend.scanner.keywords.TROOF;
+import catpiler.frontend.scanner.keywords.WAI;
+import catpiler.frontend.scanner.keywords.WIN;
+import catpiler.frontend.scanner.keywords.YA;
+import catpiler.frontend.scanner.keywords.YOU;
+import catpiler.frontend.scanner.keywords.YR;
 
 /**
  * JUnit 4 test for Scanner
@@ -67,19 +117,23 @@ public class ScannerTest {
 	@Test
 	public void testSearchTokens() {
 		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
-		Token[] tokens = null;
+		Keyword[] tokens = null;
 		try {
 			if((tokens = s.search4Tokens()) != null) {
-				Assert.assertEquals(TokenTable.id , tokens[0]);
-				Assert.assertEquals(TokenTable.id , tokens[1]);
-				Assert.assertEquals(TokenTable.string , tokens[2]);
-				Assert.assertEquals(TokenTable.integer , tokens[3]);
-				Assert.assertEquals(TokenTable.op_eq, tokens[4]);
-				Assert.assertEquals(TokenTable.function_1, tokens[5]);
-				Assert.assertEquals(TokenTable.function_2, tokens[6]);
-				Assert.assertEquals(TokenTable.var_decl_1, tokens[7]);
-				Assert.assertEquals(TokenTable.fc_if_end, tokens[8]);
-				Assert.assertNull(tokens[11]);
+				Assert.assertTrue(tokens[0] instanceof Identifier);
+				Assert.assertEquals(new String("BOTHThisIsAnIdentifier"),tokens[0].getAttribute().trim());
+				Assert.assertTrue(tokens[1] instanceof Identifier);
+				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
+				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
+				Assert.assertEquals(new String("\"someStr\""),tokens[2].getAttribute().trim());
+				Assert.assertTrue(tokens[3] instanceof Int);
+				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
+				Assert.assertTrue(tokens[4] instanceof SAEM);
+				Assert.assertTrue(tokens[5] instanceof HOW);
+				Assert.assertTrue(tokens[6] instanceof DUZ);
+				Assert.assertTrue(tokens[7] instanceof I);
+				Assert.assertTrue(tokens[8] instanceof OIC);
+				Assert.assertNull(tokens[9]);
 			} else {
 				fail("Could find correct tokens :(");
 			}
@@ -148,10 +202,10 @@ public class ScannerTest {
 	
 	private void testSeq() {
 		Scanner s = new Scanner("AN");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_seq, t);
+				Assert.assertTrue(t instanceof AN);
 			} else {
 				fail("No token found :(");
 			}
@@ -162,10 +216,10 @@ public class ScannerTest {
 
 	private void testOf() {
 		Scanner s = new Scanner("OF");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_of, t);
+				Assert.assertTrue(t instanceof OF);
 			} else {
 				fail("No token found :(");
 			}
@@ -176,10 +230,10 @@ public class ScannerTest {
 
 	private void testFuncEnd_1() {
 		Scanner s = new Scanner("IF");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_end_1, t);
+				Assert.assertTrue(t instanceof IF);
 			} else {
 				fail("No token found :(");
 			}
@@ -190,10 +244,10 @@ public class ScannerTest {
 	
 	private void testFuncEnd_2() {
 		Scanner s = new Scanner("YOU");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_end_2, t);
+				Assert.assertTrue(t instanceof YOU);
 			} else {
 				fail("No token found :(");
 			}
@@ -204,10 +258,10 @@ public class ScannerTest {
 	
 	private void testFuncEnd_3() {
 		Scanner s = new Scanner("SAY");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_end_3, t);
+				Assert.assertTrue(t instanceof SAY);
 			} else {
 				fail("No token found :(");
 			}
@@ -218,10 +272,10 @@ public class ScannerTest {
 	
 	private void testFuncEnd_4() {
 		Scanner s = new Scanner("SO");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_end_4, t);
+				Assert.assertTrue(t instanceof SO);
 			} else {
 				fail("No token found :(");
 			}
@@ -232,10 +286,10 @@ public class ScannerTest {
 
 	private void testFunc_1() {
 		Scanner s = new Scanner("HOW");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_1, t);
+				Assert.assertTrue(t instanceof HOW);
 			} else {
 				fail("No token found :(");
 			}
@@ -246,10 +300,10 @@ public class ScannerTest {
 	
 	private void testFunc_2() {
 		Scanner s = new Scanner("DUZ");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.function_2, t);
+				Assert.assertTrue(t instanceof DUZ);
 			} else {
 				fail("No token found :(");
 			}
@@ -260,10 +314,10 @@ public class ScannerTest {
 
 	private void testIfEnd() {
 		Scanner s = new Scanner("OIC");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_if_end, t);
+				Assert.assertTrue(t instanceof OIC);
 			} else {
 				fail("No token found :(");
 			}
@@ -273,11 +327,11 @@ public class ScannerTest {
 	}
 
 	private void testElse_1() {
-		Scanner s = new Scanner("NO WAI");
-		Token t = null;
+		Scanner s = new Scanner("NO");
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_else_1, t);
+				Assert.assertTrue(t instanceof NO);
 			} else {
 				fail("No token found :(");
 			}
@@ -288,10 +342,10 @@ public class ScannerTest {
 	
 	private void testElse_2() {
 		Scanner s = new Scanner("WAI");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_else_2, t);
+				Assert.assertTrue(t instanceof WAI);
 			} else {
 				fail("No token found :(");
 			}
@@ -302,10 +356,10 @@ public class ScannerTest {
 
 	private void testElseIf() {
 		Scanner s = new Scanner("MEBBE");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_else_if, t);
+				Assert.assertTrue(t instanceof MEBBE);
 			} else {
 				fail("No token found :(");
 			}
@@ -316,10 +370,10 @@ public class ScannerTest {
 
 	private void testThen_1() {
 		Scanner s = new Scanner("YA");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_then_1, t);
+				Assert.assertTrue(t instanceof YA);
 			} else {
 				fail("No token found :(");
 			}
@@ -330,10 +384,10 @@ public class ScannerTest {
 	
 	private void testThen_2() {
 		Scanner s = new Scanner("RLY");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_then_2, t);
+				Assert.assertTrue(t instanceof RLY);
 			} else {
 				fail("No token found :(");
 			}
@@ -344,10 +398,10 @@ public class ScannerTest {
 
 	private void testIf() {
 		Scanner s = new Scanner("ORLY?");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_if, t);
+				Assert.assertTrue(t instanceof ORLY);
 			} else {
 				fail("No token found :(");
 			}
@@ -358,10 +412,10 @@ public class ScannerTest {
 
 	private void testNeq() {
 		Scanner s = new Scanner("DIFFRINT");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_neq, t);
+				Assert.assertTrue(t instanceof DIFFRINT);
 			} else {
 				fail("No token found :(");
 			}
@@ -372,10 +426,10 @@ public class ScannerTest {
 
 	private void testEq_1() {
 		Scanner s = new Scanner("BOTH");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_both, t);
+				Assert.assertTrue(t instanceof BOTH);
 			} else {
 				fail("No token found :(");
 			}
@@ -386,10 +440,10 @@ public class ScannerTest {
 	
 	private void testEq_2() {
 		Scanner s = new Scanner("SAEM");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_eq, t);
+				Assert.assertTrue(t instanceof SAEM);
 			} else {
 				fail("No token found :(");
 			}
@@ -400,10 +454,10 @@ public class ScannerTest {
 
 	private void testOpEnd() {
 		Scanner s = new Scanner("MKAY");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_end, t);
+				Assert.assertTrue(t instanceof MKAY);
 			} else {
 				fail("No token found :(");
 			}
@@ -414,10 +468,10 @@ public class ScannerTest {
 
 	private void testAny() {
 		Scanner s = new Scanner("ANY");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_any, t);
+				Assert.assertTrue(t instanceof ANY);
 			} else {
 				fail("No token found :(");
 			}
@@ -428,10 +482,10 @@ public class ScannerTest {
 
 	private void testAll() {
 		Scanner s = new Scanner("ALL");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_all, t);
+				Assert.assertTrue(t instanceof ALL);
 			} else {
 				fail("No token found :(");
 			}
@@ -442,10 +496,10 @@ public class ScannerTest {
 
 	private void testNot() {
 		Scanner s = new Scanner("NOT");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_not, t);
+				Assert.assertTrue(t instanceof NOT);
 			} else {
 				fail("No token found :(");
 			}
@@ -456,10 +510,10 @@ public class ScannerTest {
 
 	private void testOr() {
 		Scanner s = new Scanner("EITHER");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_or, t);
+				Assert.assertTrue(t instanceof EITHER);
 			} else {
 				fail("No token found :(");
 			}
@@ -470,10 +524,10 @@ public class ScannerTest {
 
 	private void testAnd() {
 		Scanner s = new Scanner("BOTH");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_both, t);
+				Assert.assertTrue(t instanceof BOTH);
 			} else {
 				fail("No token found :(");
 			}
@@ -484,10 +538,10 @@ public class ScannerTest {
 
 	private void testMin() {
 		Scanner s = new Scanner("SMALLR");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_min, t);
+				Assert.assertTrue(t instanceof SMALLR);
 			} else {
 				fail("No token found :(");
 			}
@@ -498,10 +552,10 @@ public class ScannerTest {
 
 	private void testMax() {
 		Scanner s = new Scanner("BIGGR");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_max, t);
+				Assert.assertTrue(t instanceof BIGGR);
 			} else {
 				fail("No token found :(");
 			}
@@ -512,10 +566,10 @@ public class ScannerTest {
 
 	private void testQuot() {
 		Scanner s = new Scanner("QUOSHUNT");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_quot, t);
+				Assert.assertTrue(t instanceof QUOSHUNT);
 			} else {
 				fail("No token found :(");
 			}
@@ -526,10 +580,10 @@ public class ScannerTest {
 
 	private void testProd() {
 		Scanner s = new Scanner("PRODUKT");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_prod, t);
+				Assert.assertTrue(t instanceof PRODUKT);
 			} else {
 				fail("No token found :(");
 			}
@@ -540,10 +594,10 @@ public class ScannerTest {
 
 	private void testDiff() {
 		Scanner s = new Scanner("DIFF");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_diff, t);
+				Assert.assertTrue(t instanceof DIFF);
 			} else {
 				fail("No token found :(");
 			}
@@ -554,10 +608,10 @@ public class ScannerTest {
 
 	private void testSum() {
 		Scanner s = new Scanner("SUM");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.op_sum, t);
+				Assert.assertTrue(t instanceof SUM);
 			} else {
 				fail("No token found :(");
 			}
@@ -568,10 +622,10 @@ public class ScannerTest {
 
 	private void testQuote() {
 		Scanner s = new Scanner(":\"");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.char_quote, t);
+				Assert.assertTrue(t instanceof QUOTE);
 			} else {
 				fail("No token found :(");
 			}
@@ -582,10 +636,10 @@ public class ScannerTest {
 
 	private void testLF() {
 		Scanner s = new Scanner(":)");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.char_lf, t);
+				Assert.assertTrue(t instanceof LF);
 			} else {
 				fail("No token found :(");
 			}
@@ -596,10 +650,10 @@ public class ScannerTest {
 
 	private void testFalse() {
 		Scanner s = new Scanner("FAIL");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.val_false, t);
+				Assert.assertTrue(t instanceof FAIL);
 			} else {
 				fail("No token found :(");
 			}
@@ -610,10 +664,10 @@ public class ScannerTest {
 
 	private void testTrue() {
 		Scanner s = new Scanner("WIN");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.val_true, t);
+				Assert.assertTrue(t instanceof WIN);
 			} else {
 				fail("No token found :(");
 			}
@@ -624,10 +678,10 @@ public class ScannerTest {
 
 	private void testBool() {
 		Scanner s = new Scanner("TROOF");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.type_bool, t);
+				Assert.assertTrue(t instanceof TROOF);
 			} else {
 				fail("No token found :(");
 			}
@@ -638,10 +692,10 @@ public class ScannerTest {
 
 	private void testInt() {
 		Scanner s = new Scanner("NUMBR");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.type_int, t);
+				Assert.assertTrue(t instanceof NUMBR);
 			} else {
 				fail("No token found :(");
 			}
@@ -652,10 +706,10 @@ public class ScannerTest {
 
 	private void testString() {
 		Scanner s = new Scanner("CHARZ");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.type_chararray, t);
+				Assert.assertTrue(t instanceof CHARZ);
 			} else {
 				fail("No token found :(");
 			}
@@ -666,10 +720,10 @@ public class ScannerTest {
 
 	private void testVarAssign() {
 		Scanner s = new Scanner("R");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.var_assign, t);
+				Assert.assertTrue(t instanceof R);
 			} else {
 				fail("No token found :(");
 			}
@@ -680,10 +734,10 @@ public class ScannerTest {
 
 	private void testVarDecl_1() {
 		Scanner s = new Scanner("I");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.var_decl_1, t);
+				Assert.assertTrue(t instanceof I);
 			} else {
 				fail("No token found :(");
 			}
@@ -694,10 +748,10 @@ public class ScannerTest {
 	
 	private void testVarDecl_2() {
 		Scanner s = new Scanner("HAS");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.var_decl_2, t);
+				Assert.assertTrue(t instanceof HAS);
 			} else {
 				fail("No token found :(");
 			}
@@ -708,10 +762,10 @@ public class ScannerTest {
 	
 	private void testVarDecl_3() {
 		Scanner s = new Scanner("A");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.var_decl_3, t);
+				Assert.assertTrue(t instanceof A);
 			} else {
 				fail("No token found :(");
 			}
@@ -722,10 +776,10 @@ public class ScannerTest {
 
 	private void testFileEnd() {
 		Scanner s = new Scanner("KTHXBYE");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.file_end, t);
+				Assert.assertTrue(t instanceof KTHXBYE);
 			} else {
 				fail("No token found :(");
 			}
@@ -736,10 +790,10 @@ public class ScannerTest {
 
 	private void testFileBegin() {
 		Scanner s = new Scanner("HAI");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.file_begin, t);
+				Assert.assertTrue(t instanceof HAI);
 			} else {
 				fail("No token found :(");
 			}
@@ -750,7 +804,7 @@ public class ScannerTest {
 
 	private void testComment_1() {
 		Scanner s = new Scanner("BTW");
-		Token t = null;
+		Keyword t = null;
 		try {
 			t = s.lookupToken();
 			// Comments will be erased. 
@@ -763,7 +817,7 @@ public class ScannerTest {
 	
 	private void testComment_2() {
 		Scanner s = new Scanner("OBTW");
-		Token t = null;
+		Keyword t = null;
 		try {
 			t = s.lookupToken();
 			// Comments will be erased. 
@@ -776,10 +830,10 @@ public class ScannerTest {
 	
 	private void testComment_3() {
 		Scanner s = new Scanner("TLDR");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.comment_3, t);
+				Assert.assertTrue(t instanceof TLDR);
 			} else {
 				fail("No token found :(");
 			}
@@ -790,10 +844,10 @@ public class ScannerTest {
 
 	private void testLoop_1() {
 		Scanner s = new Scanner("IM");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_loop_1, t);
+				Assert.assertTrue(t instanceof IM);
 			} else {
 				fail("No token found :(");
 			}
@@ -804,10 +858,10 @@ public class ScannerTest {
 	
 	private void testLoop_2() {
 		Scanner s = new Scanner("IN");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_loop_2, t);
+				Assert.assertTrue(t instanceof IN);
 			} else {
 				fail("No token found :(");
 			}
@@ -818,10 +872,10 @@ public class ScannerTest {
 	
 	private void testLoop_3() {
 		Scanner s = new Scanner("YR");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_loop_3, t);
+				Assert.assertTrue(t instanceof YR);
 			} else {
 				fail("No token found :(");
 			}
@@ -832,10 +886,10 @@ public class ScannerTest {
 	
 	private void testLoopEnd() {
 		Scanner s = new Scanner("OUTTA");
-		Token t = null;
+		Keyword t = null;
 		try {
 			if((t = s.lookupToken()) != null) {
-				Assert.assertEquals(TokenTable.fc_loop_end, t);
+				Assert.assertTrue(t instanceof OUTTA);
 			} else {
 				fail("No token found :(");
 			}

@@ -18,6 +18,68 @@
 package catpiler.frontend.scanner;
 
 import java.io.EOFException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import catpiler.frontend.exception.NoTokenFoundException;
+import catpiler.frontend.scanner.keywords.A;
+import catpiler.frontend.scanner.keywords.ALL;
+import catpiler.frontend.scanner.keywords.AN;
+import catpiler.frontend.scanner.keywords.ANY;
+import catpiler.frontend.scanner.keywords.BIGGR;
+import catpiler.frontend.scanner.keywords.BOTH;
+import catpiler.frontend.scanner.keywords.BTW;
+import catpiler.frontend.scanner.keywords.CHAR;
+import catpiler.frontend.scanner.keywords.CHARZ;
+import catpiler.frontend.scanner.keywords.DIFF;
+import catpiler.frontend.scanner.keywords.DIFFRINT;
+import catpiler.frontend.scanner.keywords.DOWANT;
+import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.EITHER;
+import catpiler.frontend.scanner.keywords.FAIL;
+import catpiler.frontend.scanner.keywords.HAI;
+import catpiler.frontend.scanner.keywords.HAS;
+import catpiler.frontend.scanner.keywords.HOW;
+import catpiler.frontend.scanner.keywords.I;
+import catpiler.frontend.scanner.keywords.IF;
+import catpiler.frontend.scanner.keywords.IM;
+import catpiler.frontend.scanner.keywords.IN;
+import catpiler.frontend.scanner.keywords.Int;
+import catpiler.frontend.scanner.keywords.KTHXBYE;
+import catpiler.frontend.scanner.keywords.Keyword;
+import catpiler.frontend.scanner.keywords.LF;
+import catpiler.frontend.scanner.keywords.MEBBE;
+import catpiler.frontend.scanner.keywords.MKAY;
+import catpiler.frontend.scanner.keywords.NO;
+import catpiler.frontend.scanner.keywords.NOT;
+import catpiler.frontend.scanner.keywords.NUMBR;
+import catpiler.frontend.scanner.keywords.NUMBRZ;
+import catpiler.frontend.scanner.keywords.OBTW;
+import catpiler.frontend.scanner.keywords.OF;
+import catpiler.frontend.scanner.keywords.OIC;
+import catpiler.frontend.scanner.keywords.ORLY;
+import catpiler.frontend.scanner.keywords.OUTTA;
+import catpiler.frontend.scanner.keywords.PRODUKT;
+import catpiler.frontend.scanner.keywords.QUOSHUNT;
+import catpiler.frontend.scanner.keywords.QUOTE;
+import catpiler.frontend.scanner.keywords.R;
+import catpiler.frontend.scanner.keywords.RLY;
+import catpiler.frontend.scanner.keywords.SAEM;
+import catpiler.frontend.scanner.keywords.SAY;
+import catpiler.frontend.scanner.keywords.SMALLR;
+import catpiler.frontend.scanner.keywords.SO;
+import catpiler.frontend.scanner.keywords.STUFF;
+import catpiler.frontend.scanner.keywords.SUM;
+import catpiler.frontend.scanner.keywords.THATSIT;
+import catpiler.frontend.scanner.keywords.TLDR;
+import catpiler.frontend.scanner.keywords.TROOF;
+import catpiler.frontend.scanner.keywords.TROOFZ;
+import catpiler.frontend.scanner.keywords.WAI;
+import catpiler.frontend.scanner.keywords.WIN;
+import catpiler.frontend.scanner.keywords.YA;
+import catpiler.frontend.scanner.keywords.YOU;
+import catpiler.frontend.scanner.keywords.YR;
 
 
 /**
@@ -38,12 +100,14 @@ public class TokenService {
 	 * Entries that don't match the current_token will be 
 	 * set to null.
 	 */
-	private Token[] arrayOfPotentialTokens;
+	private Map<String,Class> mapOfPotentialTokens;
 
 	/*
 	 * counter for non-null elements in arrayOfPotentialTokens
 	 */
 	private int potToken_count;
+	
+	private int posArray;
 	
 	/**
 	 * Default constructor calls init()
@@ -58,64 +122,66 @@ public class TokenService {
 	 * the token array.
 	 */
 	private void init() {
-		potToken_count = TokenTable.TOKEN_COUNT;
+		posArray = 0;
 		
-		arrayOfPotentialTokens = new Token[TokenTable.TOKEN_COUNT];
-		arrayOfPotentialTokens[0] = TokenTable.comment_1;
-		arrayOfPotentialTokens[1] = TokenTable.file_begin;
-		arrayOfPotentialTokens[2] = TokenTable.file_end;
-		arrayOfPotentialTokens[3] = TokenTable.var_decl_1;
-		arrayOfPotentialTokens[4] = TokenTable.var_decl_2;
-		arrayOfPotentialTokens[5] = TokenTable.var_decl_3;
-		arrayOfPotentialTokens[6] = TokenTable.var_assign;
-		arrayOfPotentialTokens[7] = TokenTable.type_chararray;
-		arrayOfPotentialTokens[8] = TokenTable.type_bool;
-		arrayOfPotentialTokens[9] = TokenTable.type_int;
-		arrayOfPotentialTokens[10] = TokenTable.val_true;
-		arrayOfPotentialTokens[11] = TokenTable.val_false;
-		arrayOfPotentialTokens[12] = TokenTable.char_lf;
-		arrayOfPotentialTokens[13] = TokenTable.char_quote;
-		arrayOfPotentialTokens[14] = TokenTable.op_of;
-		arrayOfPotentialTokens[15] = TokenTable.op_seq;
-		arrayOfPotentialTokens[16] = TokenTable.op_sum;
-		arrayOfPotentialTokens[17] = TokenTable.op_diff;
-		arrayOfPotentialTokens[18] = TokenTable.op_prod;
-		arrayOfPotentialTokens[19] = TokenTable.op_quot;
-		arrayOfPotentialTokens[20] = TokenTable.op_max;
-		arrayOfPotentialTokens[21] = TokenTable.op_min;
-		arrayOfPotentialTokens[22] = TokenTable.op_both;
-		arrayOfPotentialTokens[23] = TokenTable.op_or;
-		arrayOfPotentialTokens[24] = TokenTable.op_all;
-		arrayOfPotentialTokens[25] = TokenTable.op_any;
-		arrayOfPotentialTokens[26] = TokenTable.op_end;
-		arrayOfPotentialTokens[27] = TokenTable.op_eq;
-		arrayOfPotentialTokens[28] = TokenTable.op_neq;
-		arrayOfPotentialTokens[29] = TokenTable.op_not;
-		arrayOfPotentialTokens[30] = TokenTable.fc_loop_1;
-		arrayOfPotentialTokens[31] = TokenTable.fc_loop_2;
-		arrayOfPotentialTokens[32] = TokenTable.fc_loop_3;
-		arrayOfPotentialTokens[33] = TokenTable.fc_loop_end;
-		arrayOfPotentialTokens[34] = TokenTable.fc_if;
-		arrayOfPotentialTokens[35] = TokenTable.fc_then_1;
-		arrayOfPotentialTokens[36] = TokenTable.fc_then_2;
-		arrayOfPotentialTokens[37] = TokenTable.fc_else_if;
-		arrayOfPotentialTokens[38] = TokenTable.fc_else_1;
-		arrayOfPotentialTokens[39] = TokenTable.fc_else_2;
-		arrayOfPotentialTokens[40] = TokenTable.fc_if_end;
-		arrayOfPotentialTokens[41] = TokenTable.function_1;
-		arrayOfPotentialTokens[42] = TokenTable.function_2;
-		arrayOfPotentialTokens[43] = TokenTable.function_end_1;
-		arrayOfPotentialTokens[44] = TokenTable.function_end_2;
-		arrayOfPotentialTokens[45] = TokenTable.function_end_3;
-		arrayOfPotentialTokens[46] = TokenTable.function_end_4;
-		arrayOfPotentialTokens[47] = TokenTable.whitespace;
-		arrayOfPotentialTokens[48] = TokenTable.comment_2;
-		arrayOfPotentialTokens[49] = TokenTable.comment_3;
-		arrayOfPotentialTokens[50] = TokenTable.type_char;
-		arrayOfPotentialTokens[51] = TokenTable.type_boolarray;
-		arrayOfPotentialTokens[52] = TokenTable.type_intarray;
-		arrayOfPotentialTokens[53] = TokenTable.struct_begin;
-		arrayOfPotentialTokens[54] = TokenTable.struct_end;
+		mapOfPotentialTokens = new HashMap<String, Class>();
+		mapOfPotentialTokens.put(BTW.tokenId,BTW.class);
+		mapOfPotentialTokens.put(HAI.tokenId,HAI.class);
+		mapOfPotentialTokens.put(KTHXBYE.tokenId,KTHXBYE.class);
+		mapOfPotentialTokens.put(I.tokenId,I.class);
+		mapOfPotentialTokens.put(HAS.tokenId,HAS.class);
+		mapOfPotentialTokens.put(A.tokenId,A.class);
+		mapOfPotentialTokens.put(R.tokenId,R.class);
+		mapOfPotentialTokens.put(CHARZ.tokenId,CHARZ.class);
+		mapOfPotentialTokens.put(TROOF.tokenId,TROOF.class);
+		mapOfPotentialTokens.put(NUMBR.tokenId,NUMBR.class);
+		mapOfPotentialTokens.put(WIN.tokenId,WIN.class);
+		mapOfPotentialTokens.put(FAIL.tokenId,FAIL.class);
+		mapOfPotentialTokens.put(LF.tokenId,LF.class);
+		mapOfPotentialTokens.put(QUOTE.tokenId,QUOTE.class);
+		mapOfPotentialTokens.put(OF.tokenId,OF.class);
+		mapOfPotentialTokens.put(AN.tokenId,AN.class);
+		mapOfPotentialTokens.put(SUM.tokenId,SUM.class);
+		mapOfPotentialTokens.put(DIFF.tokenId,DIFF.class);
+		mapOfPotentialTokens.put(PRODUKT.tokenId,PRODUKT.class);
+		mapOfPotentialTokens.put(QUOSHUNT.tokenId,QUOSHUNT.class);
+		mapOfPotentialTokens.put(BIGGR.tokenId,BIGGR.class);
+		mapOfPotentialTokens.put(SMALLR.tokenId,SMALLR.class);
+		mapOfPotentialTokens.put(BOTH.tokenId,BOTH.class);
+		mapOfPotentialTokens.put(EITHER.tokenId,EITHER.class);
+		mapOfPotentialTokens.put(ALL.tokenId,ALL.class);
+		mapOfPotentialTokens.put(ANY.tokenId,ANY.class);
+		mapOfPotentialTokens.put(MKAY.tokenId,MKAY.class);
+		mapOfPotentialTokens.put(SAEM.tokenId,SAEM.class);
+		mapOfPotentialTokens.put(DIFFRINT.tokenId,DIFFRINT.class);
+		mapOfPotentialTokens.put(NOT.tokenId,NOT.class);
+		mapOfPotentialTokens.put(IM.tokenId,IM.class);
+		mapOfPotentialTokens.put(IN.tokenId,IN.class);
+		mapOfPotentialTokens.put(YR.tokenId,YR.class);
+		mapOfPotentialTokens.put(OUTTA.tokenId,OUTTA.class);
+		mapOfPotentialTokens.put(ORLY.tokenId,ORLY.class);
+		mapOfPotentialTokens.put(YA.tokenId,YA.class);
+		mapOfPotentialTokens.put(RLY.tokenId,RLY.class);
+		mapOfPotentialTokens.put(MEBBE.tokenId,MEBBE.class);
+		mapOfPotentialTokens.put(NO.tokenId,NO.class);
+		mapOfPotentialTokens.put(WAI.tokenId,WAI.class);
+		mapOfPotentialTokens.put(OIC.tokenId,OIC.class);
+		mapOfPotentialTokens.put(HOW.tokenId,HOW.class);
+		mapOfPotentialTokens.put(DUZ.tokenId,DUZ.class);
+		mapOfPotentialTokens.put(IF.tokenId,IF.class);
+		mapOfPotentialTokens.put(YOU.tokenId,YOU.class);
+		mapOfPotentialTokens.put(SAY.tokenId,SAY.class);
+		mapOfPotentialTokens.put(SO.tokenId,SO.class);
+		mapOfPotentialTokens.put(OBTW.tokenId,OBTW.class);
+		mapOfPotentialTokens.put(TLDR.tokenId,TLDR.class);
+		mapOfPotentialTokens.put(CHAR.tokenId,CHAR.class);
+		mapOfPotentialTokens.put(TROOFZ.tokenId,TROOFZ.class);
+		mapOfPotentialTokens.put(NUMBRZ.tokenId,NUMBRZ.class);
+		mapOfPotentialTokens.put(STUFF.tokenId,STUFF.class);
+		mapOfPotentialTokens.put(THATSIT.tokenId,THATSIT.class);
+		mapOfPotentialTokens.put(DOWANT.tokenId,DOWANT.class);
+		
+		potToken_count = mapOfPotentialTokens.size();
 	}
 	
 	/**
@@ -123,7 +189,7 @@ public class TokenService {
 	 * string, an integer, a keyword or an identifier token.
 	 * 
 	 * The token[] is compared to the keyword tokens in the 
-	 * arrayOfPotentialTokens. If it doesn't match, the 
+	 * mapOfPotentialTokens. If it doesn't match, the 
 	 * array element will be set to null.
 	 * Before comparing it to the keyword tokens, we check whether
 	 * it starts with a quote " or with a number. If it starts with
@@ -132,7 +198,7 @@ public class TokenService {
 	 * we search for a keyword token.
 	 * 
 	 * A counter counts how many elements are left in the 
-	 * arrayOfPotentialTokens. If the counter is 1 at the end, 
+	 * mapOfPotentialTokens. If the counter is 1 at the end, 
 	 * we found a token, if it is = 0, we found an identifier if 
 	 * it is > 1, we found more than one keyword tokens.
 	 * 
@@ -144,57 +210,90 @@ public class TokenService {
 	 * @param pos
 	 * @return
 	 * @throws EOFException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
 	 */
-	public Token lookupToken(char token[], int pos) throws EOFException {
-		int i = 0;
-		Token retToken = null;
+//	public String lookupToken(char token[], int pos) throws EOFException {
+//		int i = 0;
+//		String retToken = null;
+//		if(token[0] == '\0') {
+//			throw new EOFException();
+//		} else if (token[0] == '\"') {
+//			// found a string
+//			return TokenTable.string;
+//		} else if(token[0] >= '0' && token[0] <= '9') {
+//			// found an integer
+//			return TokenTable.integer;
+//		}
+//		while(potToken_count > 0) {
+//			// searching for a keyword
+//			String t = mapOfPotentialTokens[i];
+//			if(t != null) {
+//				if((token[pos] == '\0' && pos == t.length())
+//						|| (pos < t.length() && token[pos] == t.charAt(pos))) {
+//					// found a matching keyword. Temporarily 
+//					// storing it in the retToken.
+//					retToken = mapOfPotentialTokens[i];
+//				} else {
+//					// current keyword token doesn't match ->
+//					// set element in array to null and decrease 
+//					// element counter
+//					mapOfPotentialTokens[i] = null;
+//					potToken_count--;
+//				}
+//			}
+//			if(i < TokenTable.TOKEN_COUNT-1)
+//				// Didn't reach the end of the array yet ->
+//				// Increasing iterate counter
+//				i++;
+//			else {
+//				if(potToken_count == 1) {
+//					// Found a keyword token :)
+//					return retToken;
+//				} else if(potToken_count == 0) {
+//					// No keyword token found. 
+//					// Assuming that we found an identifier.
+//					return TokenTable.id;
+//				} else {
+//					// Found more than one token. 
+//					// Need more information to identify token.
+//					return null;
+//				}
+//			}
+//		}
+//		// Found more than one token. 
+//		// Need more information to identify token.
+//		return null;
+//	}
+	
+	public Keyword returnFirstMatchinToken(char token[], int pos) throws EOFException, NoTokenFoundException, InstantiationException, IllegalAccessException {
 		if(token[0] == '\0') {
 			throw new EOFException();
 		} else if (token[0] == '\"') {
 			// found a string
-			return TokenTable.string;
+			return new catpiler.frontend.scanner.keywords.String();
 		} else if(token[0] >= '0' && token[0] <= '9') {
 			// found an integer
-			return TokenTable.integer;
+			return new Int();
 		}
-		while(potToken_count > 0) {
+		while(mapOfPotentialTokens.size() > 0) {
+			Iterator<String> it = mapOfPotentialTokens.keySet().iterator();
 			// searching for a keyword
-			Token t = arrayOfPotentialTokens[i];
+			String t = it.next();
 			if(t != null) {
-				if((token[pos] == '\0' && pos == t.getTokenID().length)
-						|| (pos < t.getTokenID().length && token[pos] == t.getTokenID()[pos])) {
-					// found a matching keyword. Temporarily 
-					// storing it in the retToken.
-					retToken = arrayOfPotentialTokens[i];
-				} else {
-					// current keyword token doesn't match ->
-					// set element in array to null and decrease 
-					// element counter
-					arrayOfPotentialTokens[i] = null;
-					potToken_count--;
-				}
-			}
-			if(i < TokenTable.TOKEN_COUNT-1)
-				// Didn't reach the end of the array yet ->
-				// Increasing iterate counter
-				i++;
-			else {
-				if(potToken_count == 1) {
-					// Found a keyword token :)
-					return retToken;
-				} else if(potToken_count == 0) {
-					// No keyword token found. 
-					// Assuming that we found an identifier.
-					return TokenTable.id;
-				} else {
-					// Found more than one token. 
-					// Need more information to identify token.
-					return null;
-				}
+				if((token[pos] == '\0' && pos == t.length())
+						|| (pos < t.length() && token[pos] == t.charAt(pos))) {
+					// found a matching keyword.
+					Keyword ret = (Keyword) mapOfPotentialTokens.get(t).newInstance();
+					mapOfPotentialTokens.remove(t);
+					return ret;
+				} 
+				mapOfPotentialTokens.remove(t);
 			}
 		}
 		// Found more than one token. 
 		// Need more information to identify token.
 		return null;
 	}
+	
 }

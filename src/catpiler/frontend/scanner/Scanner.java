@@ -19,8 +19,21 @@ package catpiler.frontend.scanner;
 import java.io.EOFException;
 
 import org.junit.Assert;
+import static org.junit.Assert.fail;
 
+import catpiler.frontend.exception.NoTokenFoundException;
 import catpiler.frontend.exception.SyntaxException;
+import catpiler.frontend.scanner.keywords.BTW;
+import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.HOW;
+import catpiler.frontend.scanner.keywords.I;
+import catpiler.frontend.scanner.keywords.Identifier;
+import catpiler.frontend.scanner.keywords.Int;
+import catpiler.frontend.scanner.keywords.Keyword;
+import catpiler.frontend.scanner.keywords.OBTW;
+import catpiler.frontend.scanner.keywords.OIC;
+import catpiler.frontend.scanner.keywords.SAEM;
+import catpiler.frontend.scanner.keywords.TLDR;
 
 /**
  * The CATpiler Scanner searches for Tokens in a given source
@@ -62,7 +75,6 @@ public class Scanner {
 	public Scanner(String input) {
 		source = input.toCharArray();
 		src_pointer = 0;
-		current_token = new char[100];
 		token_pointer = 0;
 	}	
 	
@@ -77,57 +89,86 @@ public class Scanner {
 	 * @throws SyntaxException Thrown if the syntax of the current 
 	 * token is incorrect.
 	 */
-	public Token lookupToken() throws SyntaxException {
+	public Keyword lookupToken() throws SyntaxException {
+		
+		current_token = new char[100];
 		TokenService tService = new TokenService();
-		Token t = null;
-		token_pointer = 0;
+		Keyword t = null;
+		token_pointer = -1;
 		// erase all the white spaces first
-		while(readWhiteSpace()) {
-			src_pointer++;
-		}
+		while(readWhiteSpace());
+		
 		// read character that is not a whitespace
 		readNextChar();
 		// look up the token that matches the current_token char array
-		// if more then one tokens have been found, null is returned,
+		// if more than one tokens have been found, null is returned,
 		// which forces the loop to read another character and try to
 		// detect the token again
 		try {
-			while((t = tService.lookupToken(current_token, token_pointer)) == null) {
+			
+			t = tService.returnFirstMatchinToken(current_token, token_pointer);
+			if(readWhiteSpace() || readEOS()) {
 				token_pointer++;
+				current_token[token_pointer] = '\0';
+			} else {
+				readNextChar();
+			}
+			
+			while(t != null &&
+					!(current_token[token_pointer] == '\0' && token_pointer == t.getTokenID().length()) &&
+					!((t instanceof catpiler.frontend.scanner.keywords.String) 
+						|| (t instanceof Int))) {
 				// if the next char is a whitespace, finalize current_token
 				// and loop up token that exactly matches the current_token 
 				// char array
 				// TODO: error handling if no token matches exactly.
-				if(readWhiteSpace()) {
-					current_token[token_pointer+1] = '\0';
+				
+				if(token_pointer >= t.getTokenID().length() || 
+						t.getTokenID().charAt(token_pointer) != current_token[token_pointer]) {
+					retract();
+					t = tService.returnFirstMatchinToken(current_token, token_pointer);
+				}
+				if(t == null) {
+					break;
+				}
+				if(readWhiteSpace() || readEOS()) {
+					token_pointer++;
+					current_token[token_pointer] = '\0';
 				} else {
 					readNextChar();
 				}
 			}
 		} catch (EOFException e) {
 			// reached end of file -> no token found
+			return t;
+		} catch (NoTokenFoundException e) {
+			// nothing found?! Could be an id...
+			t = new Identifier();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
 			return null;
 		}
-		boolean id = false;
-		// check whether the rest of the characters match the token
-		// and if it is followed by a whitespace or end-of-string,
-		// because there may exist identifiers which begin with the 
-		// same characters as a reserved keyword.
-		while(!(readWhiteSpace() || readEOS())) {
-			token_pointer++;
-			readNextChar();
-			// if the token was recognized to be an int (that is, if
-			// the first char is a number), but continues with another
-			// char somewhere, it is identified as a syntax error
-			if(t.equals(TokenTable.integer)) {
-				if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
-					//fail
-					throw new SyntaxException();
-				}
-			} else if(t.equals(TokenTable.id)) {
-				// if the token was recognized to be an id, but contains
-				// characters other than letters, digits and underscores,
-				// if is identified as a syntax error
+		
+		if(t == null) {
+			t = new Identifier();
+		}
+		
+		if(t instanceof Identifier) {
+			// if the token was recognized to be an id, but contains
+			// characters other than letters, digits and underscores,
+			// if is identified as a syntax error
+			if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
+					current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
+					current_token[token_pointer] == '_') ||
+					current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9') {
+				//fail
+				throw new SyntaxException();
+			}
+			while(!(readWhiteSpace() || readEOS())) {
+				readNextChar();
 				if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
 						current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
 						current_token[token_pointer] == '_') ||
@@ -135,42 +176,44 @@ public class Scanner {
 					//fail
 					throw new SyntaxException();
 				}
-				id = true;
-			} else if((!t.equals(TokenTable.id)) && (!t.equals(TokenTable.string)) 
-					&& token_pointer >= t.getTokenID().length) {
-				// if the current_token is bigger than the identified token,
-				// the id flag is set to true. This happens if we find an identifier
-				// that starts with the same characters as a reserved keyword.
-				// Just needs to be checked if the token isn't recognized as an id anyhow
-				id = true;
-			} else if((!t.equals(TokenTable.id)) && (!t.equals(TokenTable.string)) 
-					&& !(t.getTokenID()[token_pointer] == current_token[token_pointer])) {
-				// the same happens if the found token has the same length as the identified 
-				// keyword, but holds different characters at the end of the char array
-				id = true;
 			}
-		}
-		// if the id flag was set, reset the token to an id
-		if(id) {
-			t = TokenTable.id;
-		} 
-		
-		// append attributes, where necessary
-		if(t.equals(TokenTable.id)) {
+			token_pointer++;
+			current_token[token_pointer] = '\0';
 			t.setAttribute(new String(current_token));	
-		} else if(t.equals(TokenTable.string)) {
+		} else if(t instanceof Int) {
+			// if the token was recognized to be an int (that is, if
+			// the first char is a number), but continues with another
+			// char somewhere, it is identified as a syntax error
+			if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
+				//fail
+				throw new SyntaxException();
+			}
+			while(!(readWhiteSpace() || readEOS())) {
+				readNextChar();
+				if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
+					//fail
+					throw new SyntaxException();
+				}
+			}
+			token_pointer++;
+			current_token[token_pointer] = '\0';
+			t.setAttribute(new String(current_token));
+		} else if(t instanceof catpiler.frontend.scanner.keywords.String) {
+			while(!(readWhiteSpace() || readEOS())) {
+				readNextChar();
+			}
 			if(current_token[token_pointer] != '\"') {
 				//fail
 				throw new SyntaxException();
 			}
+			token_pointer++;
+			current_token[token_pointer] = '\0';
 			t.setAttribute(new String(current_token));
-		} else if(t.equals(TokenTable.integer)) {
-			t.setAttribute(new String(current_token));
-		} else if(t.equals(TokenTable.comment_1)) {
+		} else if(t instanceof BTW) {
 			// skip until next LF '\n'
 			eraseComment(false);
 			return lookupToken();
-		} else if(t.equals(TokenTable.comment_2)) {
+		} else if(t instanceof OBTW) {
 			eraseComment(true);
 			return lookupToken();
 		}
@@ -187,6 +230,7 @@ public class Scanner {
 	private boolean readWhiteSpace() {
 		if(src_pointer < source.length && source[src_pointer] != '\0' 
 			&& (source[src_pointer] == ' ' || source[src_pointer] == '\n')) {
+			src_pointer++;
 			return true;
 		}
 		return false;
@@ -201,7 +245,7 @@ public class Scanner {
 		} else {
 			while(src_pointer < source.length) {
 				try {
-					if(lookupToken().equals(TokenTable.comment_3)) {
+					if(lookupToken() instanceof TLDR) {
 						// found the end
 						return;
 					}
@@ -218,6 +262,7 @@ public class Scanner {
 	 */
 	private boolean readEOS() {
 		if(src_pointer >= source.length || source[src_pointer] == '\0') {
+			src_pointer++;
 			return true;
 		}
 		return false;
@@ -230,14 +275,20 @@ public class Scanner {
 	 */
 	private void readNextChar() {
 		if(src_pointer < source.length) {
-			current_token[token_pointer] = source[src_pointer];
-			current_token[token_pointer+1] = '\0';
+			current_token[token_pointer+1] = source[src_pointer];
+			current_token[token_pointer+2] = '\0';
 			src_pointer++;
+			token_pointer++;
 		} else {
 			// if we reached the end of the source code, 
 			// we just append \0
-			current_token[token_pointer] = '\0';
+			current_token[token_pointer+1] = '\0';
 		}
+	}
+	
+	private void retract() {
+		src_pointer = src_pointer-token_pointer;
+		token_pointer = 0;
 	}
 	
 	/**
@@ -246,11 +297,11 @@ public class Scanner {
 	 * @return
 	 * @throws SyntaxException
 	 */
-	public Token[] search4Tokens() throws SyntaxException {
-		Token[] tokens = new Token[100];
+	public Keyword[] search4Tokens() throws SyntaxException {
+		Keyword[] tokens = new Keyword[100];
 		
 		int i = 0;
-		Token t = null;
+		Keyword t = null;
 		src_pointer = 0;
 		// searches tokens in the source code, appends them in
 		// the tokens array and moves the src_pointer to the unread
@@ -302,36 +353,40 @@ public class Scanner {
 //			e.printStackTrace();
 //		}
 		
-//		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
-//		Token[] tokens = null;
-//		try {
-//			if((tokens = s.search4Tokens()) != null) {
-//				Assert.assertEquals(TokenTable.id , tokens[0]);
-//				Assert.assertEquals(TokenTable.id , tokens[1]);
-//				Assert.assertEquals(TokenTable.string , tokens[2]);
-//				Assert.assertEquals(TokenTable.integer , tokens[3]);
-//				Assert.assertEquals(TokenTable.op_eq, tokens[4]);
-//				Assert.assertEquals(TokenTable.function_1, tokens[5]);
-//				Assert.assertEquals(TokenTable.function_2, tokens[6]);
-//				Assert.assertEquals(TokenTable.var_decl_1, tokens[7]);
-//				Assert.assertEquals(TokenTable.fc_if_end, tokens[8]);
-//				Assert.assertNull(tokens[11]);
-//			} else {
-//				fail("Could find correct tokens :(");
-//			}
-//		} catch (SyntaxException e) {
-//			e.printStackTrace();
-//		}
-		
-		Scanner s = new Scanner("BTW");
-		Token t = null;
+		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+		Keyword[] tokens = null;
 		try {
-			t = s.lookupToken();
-			// Comments will be erased. 
-			// We therefore do not expect any token
-			Assert.assertNull(t);
+			if((tokens = s.search4Tokens()) != null) {
+				Assert.assertTrue(tokens[0] instanceof Identifier);
+				Assert.assertEquals(new String("BOTHThisIsAnIdentifier"),tokens[0].getAttribute().trim());
+				Assert.assertTrue(tokens[1] instanceof Identifier);
+				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
+				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
+				Assert.assertEquals(new String("\"someStr\""),tokens[2].getAttribute().trim());
+				Assert.assertTrue(tokens[3] instanceof Int);
+				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
+				Assert.assertTrue(tokens[4] instanceof SAEM);
+				Assert.assertTrue(tokens[5] instanceof HOW);
+				Assert.assertTrue(tokens[6] instanceof DUZ);
+				Assert.assertTrue(tokens[7] instanceof I);
+				Assert.assertTrue(tokens[8] instanceof OIC);
+				Assert.assertNull(tokens[9]);
+			} else {
+				fail("Could find correct tokens :(");
+			}
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 		}
+		
+//		Scanner s = new Scanner("BTW");
+//		Token t = null;
+//		try {
+//			t = s.lookupToken();
+//			// Comments will be erased. 
+//			// We therefore do not expect any token
+//			Assert.assertNull(t);
+//		} catch (SyntaxException e) {
+//			e.printStackTrace();
+//		}
 	}
 }
