@@ -22,8 +22,6 @@ import static org.junit.Assert.fail;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.sun.org.apache.xpath.internal.operations.And;
-
 import catpiler.frontend.exception.SyntaxException;
 import catpiler.frontend.scanner.Scanner;
 import catpiler.frontend.scanner.keywords.A;
@@ -57,11 +55,9 @@ import catpiler.frontend.scanner.keywords.NOT;
 import catpiler.frontend.scanner.keywords.NUMBR;
 import catpiler.frontend.scanner.keywords.OF;
 import catpiler.frontend.scanner.keywords.OIC;
-import catpiler.frontend.scanner.keywords.ORLY;
 import catpiler.frontend.scanner.keywords.OUTTA;
 import catpiler.frontend.scanner.keywords.PRODUKT;
 import catpiler.frontend.scanner.keywords.QUOSHUNT;
-import catpiler.frontend.scanner.keywords.QUOTE;
 import catpiler.frontend.scanner.keywords.R;
 import catpiler.frontend.scanner.keywords.RLY;
 import catpiler.frontend.scanner.keywords.SAEM;
@@ -163,7 +159,6 @@ public class ScannerTest {
 		testTrue();
 		testFalse();
 		testLF();
-		testQuote();
 		testOf();
 		testSeq();
 		testSum();
@@ -181,7 +176,6 @@ public class ScannerTest {
 		testEq_1();
 		testEq_2();
 		testNeq();
-		testIf();
 		testThen_1();
 		testThen_2();
 		testElseIf();
@@ -396,20 +390,6 @@ public class ScannerTest {
 		}
 	}
 
-	private void testIf() {
-		Scanner s = new Scanner("ORLY?");
-		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof ORLY);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void testNeq() {
 		Scanner s = new Scanner("DIFFRINT");
 		Keyword t = null;
@@ -612,20 +592,6 @@ public class ScannerTest {
 		try {
 			if((t = s.lookupToken()) != null) {
 				Assert.assertTrue(t instanceof SUM);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void testQuote() {
-		Scanner s = new Scanner(":\"");
-		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof QUOTE);
 			} else {
 				fail("No token found :(");
 			}

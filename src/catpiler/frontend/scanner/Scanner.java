@@ -199,12 +199,9 @@ public class Scanner {
 			current_token[token_pointer] = '\0';
 			t.setAttribute(new String(current_token));
 		} else if(t instanceof catpiler.frontend.scanner.keywords.String) {
-			while(!(readWhiteSpace() || readEOS())) {
+			while(!(current_token[token_pointer] == '\"' && 
+					current_token[token_pointer-1] != ':')) {
 				readNextChar();
-			}
-			if(current_token[token_pointer] != '\"') {
-				//fail
-				throw new SyntaxException();
 			}
 			token_pointer++;
 			current_token[token_pointer] = '\0';
@@ -353,7 +350,7 @@ public class Scanner {
 //			e.printStackTrace();
 //		}
 		
-		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr :\" test\" 1337 SAEM HOW DUZ I OIC");
 		Keyword[] tokens = null;
 		try {
 			if((tokens = s.search4Tokens()) != null) {
@@ -362,7 +359,7 @@ public class Scanner {
 				Assert.assertTrue(tokens[1] instanceof Identifier);
 				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
 				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
-				Assert.assertEquals(new String("\"someStr\""),tokens[2].getAttribute().trim());
+				Assert.assertEquals(new String("\"someStr :\" test\""),tokens[2].getAttribute().trim());
 				Assert.assertTrue(tokens[3] instanceof Int);
 				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
 				Assert.assertTrue(tokens[4] instanceof SAEM);
