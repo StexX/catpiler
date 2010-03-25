@@ -30,6 +30,7 @@ import catpiler.frontend.scanner.keywords.ANY;
 import catpiler.frontend.scanner.keywords.BIGGR;
 import catpiler.frontend.scanner.keywords.BOTH;
 import catpiler.frontend.scanner.keywords.BTW;
+import catpiler.frontend.scanner.keywords.CAN;
 import catpiler.frontend.scanner.keywords.CHAR;
 import catpiler.frontend.scanner.keywords.CHARZ;
 import catpiler.frontend.scanner.keywords.DIFF;
@@ -125,6 +126,7 @@ public class TokenService {
 		posArray = 0;
 		
 		mapOfPotentialTokens = new HashMap<String, Class>();
+		mapOfPotentialTokens.put(CAN.tokenId,CAN.class);
 		mapOfPotentialTokens.put(BTW.tokenId,BTW.class);
 		mapOfPotentialTokens.put(HAI.tokenId,HAI.class);
 		mapOfPotentialTokens.put(KTHXBYE.tokenId,KTHXBYE.class);
@@ -137,8 +139,6 @@ public class TokenService {
 		mapOfPotentialTokens.put(NUMBR.tokenId,NUMBR.class);
 		mapOfPotentialTokens.put(WIN.tokenId,WIN.class);
 		mapOfPotentialTokens.put(FAIL.tokenId,FAIL.class);
-		mapOfPotentialTokens.put(LF.tokenId,LF.class);
-		mapOfPotentialTokens.put(QUOTE.tokenId,QUOTE.class);
 		mapOfPotentialTokens.put(OF.tokenId,OF.class);
 		mapOfPotentialTokens.put(AN.tokenId,AN.class);
 		mapOfPotentialTokens.put(SUM.tokenId,SUM.class);

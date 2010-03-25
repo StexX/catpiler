@@ -162,8 +162,8 @@ public class Scanner {
 			// if is identified as a syntax error
 			if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
 					current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
-					current_token[token_pointer] == '_') ||
-					current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9') {
+					current_token[token_pointer] == '_' ||
+					current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
 				//fail
 				throw new SyntaxException();
 			}
@@ -171,10 +171,10 @@ public class Scanner {
 				readNextChar();
 				if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
 						current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
-						current_token[token_pointer] == '_') ||
-						current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9') {
+						current_token[token_pointer] == '_' ||
+						current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
 					//fail
-					throw new SyntaxException();
+					throw new SyntaxException("Syntaxerror on identifier " + new String(current_token));
 				}
 			}
 			token_pointer++;
@@ -184,19 +184,21 @@ public class Scanner {
 			// if the token was recognized to be an int (that is, if
 			// the first char is a number), but continues with another
 			// char somewhere, it is identified as a syntax error
-			if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
-				//fail
-				throw new SyntaxException();
-			}
-			while(!(readWhiteSpace() || readEOS())) {
-				readNextChar();
+			if(current_token[token_pointer] != '\0') {
 				if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
 					//fail
 					throw new SyntaxException();
 				}
+				while(!(readWhiteSpace() || readEOS())) {
+					readNextChar();
+					if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
+						//fail
+						throw new SyntaxException();
+					}
+				}
+				token_pointer++;
+				current_token[token_pointer] = '\0';
 			}
-			token_pointer++;
-			current_token[token_pointer] = '\0';
 			t.setAttribute(new String(current_token));
 		} else if(t instanceof catpiler.frontend.scanner.keywords.String) {
 			while(!(current_token[token_pointer] == '\"' && 
@@ -311,79 +313,79 @@ public class Scanner {
 		return tokens;
 	}
 	
-	public static void main(String[] args) {
-//		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier 1test blafasel anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
-//		Token[] tokens = null;
+//	public static void main(String[] args) {
+////		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier 1test blafasel anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+////		Token[] tokens = null;
+////		try {
+////			if((tokens = s.search4Tokens()) != null) {
+////				Assert.assertEquals(TokenTable.string , tokens[0]);
+////				Assert.assertEquals(TokenTable.integer , tokens[1]);
+////				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
+////				Assert.assertEquals(TokenTable.function_1, tokens[3]);
+////				Assert.assertEquals(TokenTable.function_2, tokens[4]);
+////				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
+////				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
+////				Assert.assertNull(tokens[11]);
+////			} else {
+////				fail("Could find correct tokens :(");
+////			}
+////		} catch (SyntaxException e) {
+////			e.printStackTrace();
+////		}
+//		
+////		Scanner s = new Scanner("OBTW BOTHThisIsAnIdentifier \n anotherID TLDR  \"someStr\" 1337 SAEM HOW DUZ I OIC");
+////		Token[] tokens = null;
+////		try {
+////			if((tokens = s.search4Tokens()) != null) {
+////				Assert.assertEquals(TokenTable.string , tokens[0]);
+////				Assert.assertEquals(TokenTable.integer , tokens[1]);
+////				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
+////				Assert.assertEquals(TokenTable.function_1, tokens[3]);
+////				Assert.assertEquals(TokenTable.function_2, tokens[4]);
+////				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
+////				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
+////				Assert.assertNull(tokens[11]);
+////			} else {
+////				fail("Could find correct tokens :(");
+////			}
+////		} catch (SyntaxException e) {
+////			e.printStackTrace();
+////		}
+//		
+//		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr :\" test\" 1337 SAEM HOW DUZ I OIC");
+//		Keyword[] tokens = null;
 //		try {
 //			if((tokens = s.search4Tokens()) != null) {
-//				Assert.assertEquals(TokenTable.string , tokens[0]);
-//				Assert.assertEquals(TokenTable.integer , tokens[1]);
-//				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
-//				Assert.assertEquals(TokenTable.function_1, tokens[3]);
-//				Assert.assertEquals(TokenTable.function_2, tokens[4]);
-//				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
-//				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
-//				Assert.assertNull(tokens[11]);
+//				Assert.assertTrue(tokens[0] instanceof Identifier);
+//				Assert.assertEquals(new String("BOTHThisIsAnIdentifier"),tokens[0].getAttribute().trim());
+//				Assert.assertTrue(tokens[1] instanceof Identifier);
+//				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
+//				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
+//				Assert.assertEquals(new String("\"someStr :\" test\""),tokens[2].getAttribute().trim());
+//				Assert.assertTrue(tokens[3] instanceof Int);
+//				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
+//				Assert.assertTrue(tokens[4] instanceof SAEM);
+//				Assert.assertTrue(tokens[5] instanceof HOW);
+//				Assert.assertTrue(tokens[6] instanceof DUZ);
+//				Assert.assertTrue(tokens[7] instanceof I);
+//				Assert.assertTrue(tokens[8] instanceof OIC);
+//				Assert.assertNull(tokens[9]);
 //			} else {
 //				fail("Could find correct tokens :(");
 //			}
 //		} catch (SyntaxException e) {
 //			e.printStackTrace();
 //		}
-		
-//		Scanner s = new Scanner("OBTW BOTHThisIsAnIdentifier \n anotherID TLDR  \"someStr\" 1337 SAEM HOW DUZ I OIC");
-//		Token[] tokens = null;
-//		try {
-//			if((tokens = s.search4Tokens()) != null) {
-//				Assert.assertEquals(TokenTable.string , tokens[0]);
-//				Assert.assertEquals(TokenTable.integer , tokens[1]);
-//				Assert.assertEquals(TokenTable.op_eq, tokens[2]);
-//				Assert.assertEquals(TokenTable.function_1, tokens[3]);
-//				Assert.assertEquals(TokenTable.function_2, tokens[4]);
-//				Assert.assertEquals(TokenTable.var_decl_1, tokens[5]);
-//				Assert.assertEquals(TokenTable.fc_if_end, tokens[6]);
-//				Assert.assertNull(tokens[11]);
-//			} else {
-//				fail("Could find correct tokens :(");
-//			}
-//		} catch (SyntaxException e) {
-//			e.printStackTrace();
-//		}
-		
-		Scanner s = new Scanner("BOTHThisIsAnIdentifier anotherID  \"someStr :\" test\" 1337 SAEM HOW DUZ I OIC");
-		Keyword[] tokens = null;
-		try {
-			if((tokens = s.search4Tokens()) != null) {
-				Assert.assertTrue(tokens[0] instanceof Identifier);
-				Assert.assertEquals(new String("BOTHThisIsAnIdentifier"),tokens[0].getAttribute().trim());
-				Assert.assertTrue(tokens[1] instanceof Identifier);
-				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
-				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
-				Assert.assertEquals(new String("\"someStr :\" test\""),tokens[2].getAttribute().trim());
-				Assert.assertTrue(tokens[3] instanceof Int);
-				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
-				Assert.assertTrue(tokens[4] instanceof SAEM);
-				Assert.assertTrue(tokens[5] instanceof HOW);
-				Assert.assertTrue(tokens[6] instanceof DUZ);
-				Assert.assertTrue(tokens[7] instanceof I);
-				Assert.assertTrue(tokens[8] instanceof OIC);
-				Assert.assertNull(tokens[9]);
-			} else {
-				fail("Could find correct tokens :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
-		
-//		Scanner s = new Scanner("BTW");
-//		Token t = null;
-//		try {
-//			t = s.lookupToken();
-//			// Comments will be erased. 
-//			// We therefore do not expect any token
-//			Assert.assertNull(t);
-//		} catch (SyntaxException e) {
-//			e.printStackTrace();
-//		}
-	}
+//		
+////		Scanner s = new Scanner("BTW");
+////		Token t = null;
+////		try {
+////			t = s.lookupToken();
+////			// Comments will be erased. 
+////			// We therefore do not expect any token
+////			Assert.assertNull(t);
+////		} catch (SyntaxException e) {
+////			e.printStackTrace();
+////		}
+//	}
 }
