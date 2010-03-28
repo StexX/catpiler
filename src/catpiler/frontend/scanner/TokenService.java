@@ -53,7 +53,9 @@ import catpiler.frontend.scanner.keywords.LF;
 import catpiler.frontend.scanner.keywords.MEBBE;
 import catpiler.frontend.scanner.keywords.MKAY;
 import catpiler.frontend.scanner.keywords.NO;
+import catpiler.frontend.scanner.keywords.NOOB;
 import catpiler.frontend.scanner.keywords.NOT;
+import catpiler.frontend.scanner.keywords.NOW;
 import catpiler.frontend.scanner.keywords.NUMBR;
 import catpiler.frontend.scanner.keywords.NUMBRZ;
 import catpiler.frontend.scanner.keywords.OBTW;
@@ -180,6 +182,8 @@ public class TokenService {
 		mapOfPotentialTokens.put(STUFF.tokenId,STUFF.class);
 		mapOfPotentialTokens.put(THATSIT.tokenId,THATSIT.class);
 		mapOfPotentialTokens.put(DOWANT.tokenId,DOWANT.class);
+		mapOfPotentialTokens.put(NOW.tokenId,NOW.class);
+		mapOfPotentialTokens.put(NOOB.tokenId,NOOB.class);
 		
 		potToken_count = mapOfPotentialTokens.size();
 	}
