@@ -1,0 +1,29 @@
+<LETTER> :== "a" | ... | "z" | "A" | ... | "Z" .
+<DIGIT_NO_ZERO> :== "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+<DIGIT> :== "0" | <DIGIT_NO_ZERO> .
+<NUM> :== <DIGIT_NO_ZERO> {<DIGIT>} .
+<UNDERSCORE> :== "_" .
+<CTRL_CHAR> :== ":)" .
+<SPECIAL_CHAR> :== " " | <UNDERSCORE> | <CTRL_CHAR> | "-" | "." | "," | ";" | ":" | "!" | ":"" | "$" | "%" | "&" | "/" | "(" | ")" | "=" | "?" | "\" | "'" | "*" | "+" | ">" | "<" .
+<STRING> :== """ ({<LETTER> | <DIGIT> | <SPECIAL_CHAR>}) """ .
+<BOOL> :== "WIN" | "FAIL" .
+<IDENTIFIER> :== <LETTER> {<LETTER> | <DIGIT> | <UNDERSCORE>} .
+<VALUE> :== <BOOL> | <NUM> | <STRING> .
+<TYPE> :== "TROOF" | "NUMBR" | "YARN" .
+<GEN_EXPR> :== ("BOTH SAEM" | "DIFFRINT") <OPERATION> "AN" <OPERATION> .
+<INF_EXPR> :== ("ALL OF" | "ANY OF") <BOOL> ["AN" <BOOL>] "MKAY" .
+<BI_EXPR> :== <BOOL_OP>  | <GEN_EXPR> .
+<EXPR> :== <BI_EXPR> | <INF_EXPR> | <BOOL> .
+<IO_OP> :== VISIBLE <VALUE> | GIMMEH <IDENTIFIER> .
+<STR_OP> :== "SMOOSH" <STRING> ["AN" <STRING>] MKAY | :<OPERATION> | "MAEK" <OPERATION> "A" <TYPE> | <STRING> .
+<BOOL_OP> :== (("BOTH OF" | "EITHER OF" | "WON OF") <BOOL> "AN" <BOOL>) | ("NOT" <BOOL>) | <EXPR> .
+<NUM_OP> :== ("SUM OF" | "DIFF OF" | "PRODUKT OF" | "QUOSHUNT OF" | "MOD OF" | "BIGGR OF" | "SMALLR OF") <NUM> "AN" <NUM> | <NUM> .
+<OPERATION> :== <NUM_OP> | <BOOL_OP> | <STR_OP> .
+<IF_STATEMENT> :== <EXPR> ORLY? YA RLY <STATEMENT> {MEBBE <EXPR> <STATEMENT>} {NO WAI <STATEMENT>} OIC .
+<SWITCH_STATEMENT> :== <EXPR> WTF? [OMG <OPERATION> {OMG <OPERATION>} | OMGWTF] OIC .
+<LOOP> :== "IM IN YR" <identifier> {YR <IDENTIFIER>} {WILE|TIL <EXPR>} <STATEMENT> "IM OUTTA YR" <IDENTIFIER> .
+<FLOW_CONTROL_STATEMENT> :== <IF_STATEMENT> | <SWITCH_STATEMENT>  | <LOOP> .
+<FUNC_CALL> :== <IDENTIFIER> {<EXPR>} .
+<STATEMENT> :== <VAR_DECL> | (<VAR_ASSIGN> [| <OPERATION> |]) | <FLOW_CONTROL_STATEMENT> | <FUNC_CALL> .
+<FUNCTION> :== "HOW DUZ I" <IDENTIFIER> {YR <IDENTIFIER> {AN YR <IDENTIFIER>}} STATEMENT { | "FOUND YR" <EXPR> | GTFO} "IF YOU SAY SO" .
+<PROGRAMM> :== "HAI" <STATEMENT> "KTHXBYE" <FUNCTION> .

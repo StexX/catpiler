@@ -1,0 +1,69 @@
+\documentclass{llncs}
+
+\usepackage[utf8]{inputenc}
+\usepackage{makeidx}
+\usepackage{booktabs}
+\usepackage{llncsdoc}
+\usepackage[pdftex]{graphicx}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{fancyvrb}
+\usepackage{capt-of}
+\usepackage[plainpages=false,pdfpagelabels]{hyperref}
+\usepackage{amsmath}
+\usepackage[margin=10pt,font=small,labelfont=bf,justification=centerlast]{caption}
+
+% english bibliography
+\usepackage[english]{babel}
+\usepackage{babelbib}
+
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand*{\thelstlisting}{\arabic{lstlisting}}%
+  }
+\makeatother
+
+\begin{document}
+
+\title{TITLE}
+\subtitle{SUBTITLE\thanks{The research leading to these results is part of the project ``KiWi - Knowledge in a Wiki'' and has received funding from the European Community's Seventh Framework Programme (FP7/2007-2013) under grant agreement No. 211932.}}
+\author{Rolf Sint\inst{1}}
+\institute{\email{rolf.sint@salzburgresearch.at} \\ Salzburg Research }
+
+%\makeatletter % necessary to allow @-directives
+%\hypersetup{
+%pdftitle=   {\@title},
+%pdfsubject= {\@title},
+%pdfkeywords={FOAF, FOAF+SSL, Linked-Data Updates, KiWi, Authentication, Authorization, Semantic Web, Social Web},
+%pdfauthor = {Stephanie Stroka},
+%pdfcreator= {LaTeX with hyperref on Linux 2.6.32-gentoo-r6},
+%linkbordercolor = 0 0 0, pdfborder = 0 0 0
+%}
+%\makeatother
+
+\maketitle
+
+\begin{abstract}
+abstract blalblablawjemff rgregerg trhrtz afkwerpoigfjk tehrthth
+ethrthrzjt ztjtzjtzj aeflwektoipjth tehorjtmopinwog
+\end{abstract}
+
+\section{Motivation}
+
+\section{Section 1}
+
+Blabla, see figure \ref{openIDadditional}.
+
+\begin{figure}[h]
+  \centering
+  \fbox{
+    \includegraphics[width=0.8\textwidth]{img/openID_information.png}
+  }
+  \caption{Additional Information for the openID account}
+  \label{openIDadditional}
+\end{figure}
+
+
+\section{Conclusion and Outlook}
+
+\end{document}
