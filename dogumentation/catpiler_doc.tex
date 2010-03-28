@@ -185,9 +185,9 @@ $<$FUNCTION$>$ & $ ::=$ "HOW DUZ I" $<$IDENTIFIER$>$ \\
 		& \qquad $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $\lbrace$ "FOUND YR" $<$EXPR$>$ $|$ "GTFO"$\rbrace$ \\
 		& \qquad "IF YOU SAY SO" . \\
 $<$MODULE$>$ & $::=$ "CAN HAS" $<$IDENTIFIER$>$ "?" . \\
-$<$STRUCT$>$ & $::=$ "STUFF" $\lbrace$ $<$VAR\_DECL$>$ "THATSIT" . \\
+$<$STRUCT$>$ & $::=$ "STUFF" $\lbrace$ $<$VAR\_INIT$>$ "THATSIT" . \\
 $<$MAIN$>$ & $::=$ "HAI" $\lbrace$ $<$STATEMENT$>$ $\rbrace$ "KTHXBYE" . \\
-$<$PROGRAMM$>$ & $::=$ $\lbrace$ $<$MODULE$>$ $\rbrace$ $[$ $<$MAIN$>$ $]$ $\lbrace$ $<$FUNCTION$>$ $\rbrace$ . \\
+$<$PROGRAMM$>$ & $::=$ $\lbrace$ $<$MODULE$>$ $\rbrace$ $\lbrace$ $<$STRUCT$>$ $\rbrace$ $[$ $<$MAIN$>$ $]$ $\lbrace$ $<$FUNCTION$>$ $\rbrace$ . \\
 
 \bottomrule
 	\end{tabular}

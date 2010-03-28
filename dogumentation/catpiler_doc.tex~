@@ -187,7 +187,7 @@ $<$FUNCTION$>$ & $ ::=$ "HOW DUZ I" $<$IDENTIFIER$>$ \\
 $<$MODULE$>$ & $::=$ "CAN HAS" $<$IDENTIFIER$>$ "?" . \\
 $<$STRUCT$>$ & $::=$ "STUFF" $\lbrace$ $<$VAR\_DECL$>$ "THATSIT" . \\
 $<$MAIN$>$ & $::=$ "HAI" $\lbrace$ $<$STATEMENT$>$ $\rbrace$ "KTHXBYE" . \\
-$<$PROGRAMM$>$ & $::=$ $\lbrace$ $<$MODULE$>$ $\rbrace$ $[$ $<$MAIN$>$ $]$ $\lbrace$ $<$FUNCTION$>$ $\rbrace$ . \\
+$<$PROGRAMM$>$ & $::=$ $\lbrace$ $<$MODULE$>$ $\rbrace$ $\lbrace$ $<$STRUCT$>$ $\rbrace$ $[$ $<$MAIN$>$ $]$ $\lbrace$ $<$FUNCTION$>$ $\rbrace$ . \\
 
 \bottomrule
 	\end{tabular}
