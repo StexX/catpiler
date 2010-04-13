@@ -39,6 +39,8 @@ import catpiler.frontend.scanner.keywords.DOWANT;
 import catpiler.frontend.scanner.keywords.DUZ;
 import catpiler.frontend.scanner.keywords.EITHER;
 import catpiler.frontend.scanner.keywords.FAIL;
+import catpiler.frontend.scanner.keywords.FOUND;
+import catpiler.frontend.scanner.keywords.GTFO;
 import catpiler.frontend.scanner.keywords.HAI;
 import catpiler.frontend.scanner.keywords.HAS;
 import catpiler.frontend.scanner.keywords.HOW;
@@ -46,10 +48,10 @@ import catpiler.frontend.scanner.keywords.I;
 import catpiler.frontend.scanner.keywords.IF;
 import catpiler.frontend.scanner.keywords.IM;
 import catpiler.frontend.scanner.keywords.IN;
+import catpiler.frontend.scanner.keywords.IS;
 import catpiler.frontend.scanner.keywords.Int;
 import catpiler.frontend.scanner.keywords.KTHXBYE;
 import catpiler.frontend.scanner.keywords.Keyword;
-import catpiler.frontend.scanner.keywords.LF;
 import catpiler.frontend.scanner.keywords.MEBBE;
 import catpiler.frontend.scanner.keywords.MKAY;
 import catpiler.frontend.scanner.keywords.NO;
@@ -65,7 +67,6 @@ import catpiler.frontend.scanner.keywords.ORLY;
 import catpiler.frontend.scanner.keywords.OUTTA;
 import catpiler.frontend.scanner.keywords.PRODUKT;
 import catpiler.frontend.scanner.keywords.QUOSHUNT;
-import catpiler.frontend.scanner.keywords.QUOTE;
 import catpiler.frontend.scanner.keywords.R;
 import catpiler.frontend.scanner.keywords.RLY;
 import catpiler.frontend.scanner.keywords.SAEM;
@@ -75,10 +76,12 @@ import catpiler.frontend.scanner.keywords.SO;
 import catpiler.frontend.scanner.keywords.STUFF;
 import catpiler.frontend.scanner.keywords.SUM;
 import catpiler.frontend.scanner.keywords.THATSIT;
+import catpiler.frontend.scanner.keywords.TIL;
 import catpiler.frontend.scanner.keywords.TLDR;
 import catpiler.frontend.scanner.keywords.TROOF;
 import catpiler.frontend.scanner.keywords.TROOFZ;
 import catpiler.frontend.scanner.keywords.WAI;
+import catpiler.frontend.scanner.keywords.WILE;
 import catpiler.frontend.scanner.keywords.WIN;
 import catpiler.frontend.scanner.keywords.YA;
 import catpiler.frontend.scanner.keywords.YOU;
@@ -184,91 +187,14 @@ public class TokenService {
 		mapOfPotentialTokens.put(DOWANT.tokenId,DOWANT.class);
 		mapOfPotentialTokens.put(NOW.tokenId,NOW.class);
 		mapOfPotentialTokens.put(NOOB.tokenId,NOOB.class);
+		mapOfPotentialTokens.put(FOUND.tokenId,FOUND.class);
+		mapOfPotentialTokens.put(GTFO.tokenId,GTFO.class);
+		mapOfPotentialTokens.put(WILE.tokenId,WILE.class);
+		mapOfPotentialTokens.put(TIL.tokenId,TIL.class);
+		mapOfPotentialTokens.put(IS.tokenId,IS.class);
 		
 		potToken_count = mapOfPotentialTokens.size();
 	}
-	
-	/**
-	 * Checks whether a given char array (token[]) is a 
-	 * string, an integer, a keyword or an identifier token.
-	 * 
-	 * The token[] is compared to the keyword tokens in the 
-	 * mapOfPotentialTokens. If it doesn't match, the 
-	 * array element will be set to null.
-	 * Before comparing it to the keyword tokens, we check whether
-	 * it starts with a quote " or with a number. If it starts with
-	 * a quote, we identify it as a string, if it starts with a number,
-	 * we identify it as an integer. If none of both matches,
-	 * we search for a keyword token.
-	 * 
-	 * A counter counts how many elements are left in the 
-	 * mapOfPotentialTokens. If the counter is 1 at the end, 
-	 * we found a token, if it is = 0, we found an identifier if 
-	 * it is > 1, we found more than one keyword tokens.
-	 * 
-	 * If more than one tokens are found, the method returns null,
-	 * forcing the caller to read another character and rerun the
-	 * lookupToken() method.
-	 * 
-	 * @param token
-	 * @param pos
-	 * @return
-	 * @throws EOFException 
-	 * @throws IllegalAccessException 
-	 * @throws InstantiationException 
-	 */
-//	public String lookupToken(char token[], int pos) throws EOFException {
-//		int i = 0;
-//		String retToken = null;
-//		if(token[0] == '\0') {
-//			throw new EOFException();
-//		} else if (token[0] == '\"') {
-//			// found a string
-//			return TokenTable.string;
-//		} else if(token[0] >= '0' && token[0] <= '9') {
-//			// found an integer
-//			return TokenTable.integer;
-//		}
-//		while(potToken_count > 0) {
-//			// searching for a keyword
-//			String t = mapOfPotentialTokens[i];
-//			if(t != null) {
-//				if((token[pos] == '\0' && pos == t.length())
-//						|| (pos < t.length() && token[pos] == t.charAt(pos))) {
-//					// found a matching keyword. Temporarily 
-//					// storing it in the retToken.
-//					retToken = mapOfPotentialTokens[i];
-//				} else {
-//					// current keyword token doesn't match ->
-//					// set element in array to null and decrease 
-//					// element counter
-//					mapOfPotentialTokens[i] = null;
-//					potToken_count--;
-//				}
-//			}
-//			if(i < TokenTable.TOKEN_COUNT-1)
-//				// Didn't reach the end of the array yet ->
-//				// Increasing iterate counter
-//				i++;
-//			else {
-//				if(potToken_count == 1) {
-//					// Found a keyword token :)
-//					return retToken;
-//				} else if(potToken_count == 0) {
-//					// No keyword token found. 
-//					// Assuming that we found an identifier.
-//					return TokenTable.id;
-//				} else {
-//					// Found more than one token. 
-//					// Need more information to identify token.
-//					return null;
-//				}
-//			}
-//		}
-//		// Found more than one token. 
-//		// Need more information to identify token.
-//		return null;
-//	}
 	
 	public Keyword returnFirstMatchinToken(char token[], int pos) throws EOFException, NoTokenFoundException, InstantiationException, IllegalAccessException {
 		if(token[0] == '\0') {

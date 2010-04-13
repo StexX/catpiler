@@ -47,7 +47,6 @@ import catpiler.frontend.scanner.keywords.Identifier;
 import catpiler.frontend.scanner.keywords.Int;
 import catpiler.frontend.scanner.keywords.KTHXBYE;
 import catpiler.frontend.scanner.keywords.Keyword;
-import catpiler.frontend.scanner.keywords.LF;
 import catpiler.frontend.scanner.keywords.MEBBE;
 import catpiler.frontend.scanner.keywords.MKAY;
 import catpiler.frontend.scanner.keywords.NO;
@@ -158,7 +157,6 @@ public class ScannerTest {
 		testBool();
 		testTrue();
 		testFalse();
-		testLF();
 		testOf();
 		testSeq();
 		testSum();
@@ -592,20 +590,6 @@ public class ScannerTest {
 		try {
 			if((t = s.lookupToken()) != null) {
 				Assert.assertTrue(t instanceof SUM);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void testLF() {
-		Scanner s = new Scanner(":)");
-		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof LF);
 			} else {
 				fail("No token found :(");
 			}

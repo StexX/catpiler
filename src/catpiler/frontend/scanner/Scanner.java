@@ -19,20 +19,15 @@ package catpiler.frontend.scanner;
 import java.io.EOFException;
 
 import org.junit.Assert;
-import static org.junit.Assert.fail;
 
 import catpiler.frontend.exception.NoTokenFoundException;
 import catpiler.frontend.exception.SyntaxException;
 import catpiler.frontend.scanner.keywords.BTW;
-import catpiler.frontend.scanner.keywords.DUZ;
-import catpiler.frontend.scanner.keywords.HOW;
-import catpiler.frontend.scanner.keywords.I;
 import catpiler.frontend.scanner.keywords.Identifier;
 import catpiler.frontend.scanner.keywords.Int;
 import catpiler.frontend.scanner.keywords.Keyword;
 import catpiler.frontend.scanner.keywords.OBTW;
-import catpiler.frontend.scanner.keywords.OIC;
-import catpiler.frontend.scanner.keywords.SAEM;
+import catpiler.frontend.scanner.keywords.R;
 import catpiler.frontend.scanner.keywords.TLDR;
 
 /**
@@ -68,6 +63,8 @@ public class Scanner {
 	 */
 	private int token_pointer;
 	
+	private int pointerBeforeToken;
+	
 	/**
 	 * Initializes the Scanner variables
 	 * @param input
@@ -75,6 +72,7 @@ public class Scanner {
 	public Scanner(String input) {
 		source = input.toCharArray();
 		src_pointer = 0;
+		pointerBeforeToken = 0;
 		token_pointer = 0;
 	}	
 	
@@ -91,6 +89,7 @@ public class Scanner {
 	 */
 	public Keyword lookupToken() throws SyntaxException {
 		
+		pointerBeforeToken = src_pointer;
 		current_token = new char[100];
 		TokenService tService = new TokenService();
 		Keyword t = null;
@@ -285,9 +284,15 @@ public class Scanner {
 		}
 	}
 	
-	private void retract() {
+	private int retract() {
+		int tmp_tkn_ptr = token_pointer;
 		src_pointer = src_pointer-token_pointer;
 		token_pointer = 0;
+		return tmp_tkn_ptr;
+	}
+	
+	public void setSrcPointer(int pointer) {
+		src_pointer = pointer;
 	}
 	
 	/**
@@ -311,6 +316,31 @@ public class Scanner {
 		}
 		
 		return tokens;
+	}
+
+	public int getPointerBeforeToken() {
+		return pointerBeforeToken;
+	}
+	
+	public int getSrcPointer() {
+		return src_pointer;
+	}
+
+	public static void main(String[] args) {
+		Scanner s = new Scanner("var1 R 3 ");
+		try {
+			Keyword k1 = s.lookupToken();
+			Assert.assertTrue(k1 instanceof Identifier);
+			System.out.println("first token: " + k1.getTokenID());
+			Keyword k2 = s.lookupToken();
+			Assert.assertTrue(k2 instanceof R);
+			System.out.println("second token: " + k2.getTokenID());
+			Keyword k3 = s.lookupToken();
+			Assert.assertTrue(k3 instanceof Int);
+			System.out.println("third token: " + k3.getTokenID());
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+		}
 	}
 	
 //	public static void main(String[] args) {

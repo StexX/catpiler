@@ -152,7 +152,6 @@ $<$SPECIAL\_CHAR$>$ & $ ::= "\ " | <$UNDERSCORE$>$ $|$ $<$CTRL\_CHAR$> | "-" | "
 $<$STRING$>$ & $ ::= """ ( \lbrace <$LETTER$>$ $|$ $<$DIGIT$>$ $|$ $<$SPECIAL\_CHAR$>$ $\rbrace$) """ . \\
 $<$BOOL$>$ & $::=$ "WIN" $|$ "FAIL" . \\
 $<$IDENTIFIER$>$ & $::=$ $<$LETTER$>$ $\lbrace$ $<$LETTER$>$ $|$ $<$DIGIT$>$ $|$ $<$UNDERSCORE$>$ $\rbrace$ . \\
-$<$VALUE$>$ & $::=$ $<$BOOL$>$ $|$ $<$NUM$>$ $|$ $<$STRING$>$ . \\
 $<$TYPE$>$ & $::=$ "TROOF" $|$ "NUMBR" $|$ "CHAR" . \\
 		& \qquad "TROOFZ" $|$ "NUMBRZ" $|$ "CHARZ" . \\
 $<$GEN\_EXPR$>$ & $::=$ ("BOTH SAEM" $|$ "DIFFRINT") $<$OPERATION$>$ "AN" $<$OPERATION$>$ . \\
@@ -161,8 +160,8 @@ $<$INF\_EXPR$>$ & $::=$ ("ALL OF" $|$ "ANY OF") $<$BOOL\_OP$>$ "AN" $<$BOOL\_OP$
 $<$BI\_EXPR$>$ & $::=$ $<$BOOL\_OP$>$  $|$ $<$GEN\_EXPR$>$ . \\
 $<$EXPR$>$ & $::=$ $<$BI\_EXPR$>$ $|$ $<$INF\_EXPR$>$ $|$ ($<$BOOL$>$$|$ $<$IDENTIFIER$>$) . \\
 %$<$IO\_OP$>$ & $::=$ VISIBLE $<$VALUE$>$ $|$ GIMMEH $<$IDENTIFIER$>$ . \\
-$<$BOOL\_OP$>$ & $::=$ (("BOTH OF" $|$ "EITHER OF") $<$BOOL\_OP$>$ "AN" $<$BOOL\_OP$>$) $|$ \\ 
-		& \qquad("NOT" $<$BOOL\_OP$>$) $|$ $<$EXPR$>$ . \\
+$<$BOOL\_OP$>$ & $::=$ (("BOTH OF" $|$ "EITHER OF") $<$EXPR$>$ "AN" $<$EXPR$>$) $|$ \\ 
+		& \qquad("NOT" $<$EXPR$>$) . \\
 $<$STR\_OP$>$ & $::=$ $<$STRING$>$ $|$ $<$IDENTIFIER$>$ . \\ 
 $<$NUM\_OP$>$ & $ ::=$ ("SUM OF" $|$ "DIFF OF" $|$ "PRODUKT OF" $|$ "QUOSHUNT OF" $|$ \\ 
 		& \qquad "BIGGR OF" $|$ "SMALLR OF") $<$NUM\_OP$>$ "AN" $<$NUM\_OP$>$ $|$ \\
@@ -173,7 +172,7 @@ $<$VAR\_DECL$>$ & $::=$ $<$IDENTIFIER$>$ "IS NOW A" $<$TYPE$>$ . \\
 $<$VAR\_ASSIGN$>$ & $::=$ $<$IDENTIFIER$>$ "R" $<$OPERATION$>$ . \\
 $<$IF$>$ & $::=$ $<$EXPR$>$ ORLY? YA RLY $\lbrace$ $<$STATEMENT$>$ $\rbrace$ \\ 
 		& \qquad $\lbrace$ MEBBE $<$EXPR$>$ $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $\rbrace$ \\
-		& \qquad $\lbrace$ NO WAI $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $\rbrace$ OIC . \\
+		& \qquad $[$ NO WAI $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $]$ $\rbrace$ OIC . \\
 $<$LOOP$>$ & $ ::=$ "IM IN YR" $<$IDENTIFIER$>$ $[$YR $<$IDENTIFIER$>$ $]$ $[$WILE$|$TIL $<$EXPR$>$ $]$ \\ 
 		& \qquad $\lbrace$ $<$STATEMENT$>$ $\rbrace$ "IM OUTTA YR" $<$IDENTIFIER$>$ . \\
 $<$FLOW\_CONTROL$>$ & $ ::=$ $<$IF$>$ $|$ $<$LOOP$>$ . \\

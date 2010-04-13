@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2009.12.8)  28 MAR 2010 21:51
+This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2009.12.8)  6 APR 2010 14:35
 entering extended mode
  %&-line parsing enabled.
 **\nonstopmode \input{catpiler_doc.tex}
@@ -687,7 +687,7 @@ Package hyperref Warning: bookmark level for unknown author defaults to 0.
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (28.16061pt too wide) in paragraph at lines 140--194
+Overfull \hbox (28.16061pt too wide) in paragraph at lines 140--193
  [] |
  []
 
@@ -715,7 +715,7 @@ luesky/cm/cmr5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr7.pfb></usr
 /share/texmf-dist/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texmf-dist/fonts/
 type1/bluesky/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmsy7.
 pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmtt9.pfb>
-Output written on catpiler_doc.pdf (3 pages, 71956 bytes).
+Output written on catpiler_doc.pdf (3 pages, 71869 bytes).
 PDF statistics:
  64 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 131072)
