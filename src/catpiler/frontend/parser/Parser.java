@@ -18,6 +18,9 @@
 package catpiler.frontend.parser;
 
 import static org.junit.Assert.fail;
+
+import org.junit.Assert;
+
 import catpiler.frontend.exception.ParseException;
 import catpiler.frontend.exception.SyntaxException;
 import catpiler.frontend.scanner.Scanner;
@@ -341,8 +344,12 @@ public class Parser {
 	}
 
 	public boolean isGenExpr(Keyword keyword) throws SyntaxException, ParseException {
+		Keyword lookahead = lookAhead();
 		if(keyword instanceof DIFFRINT || 
-			(keyword instanceof BOTH && s.lookupToken() instanceof SAEM) ) {
+			(keyword instanceof BOTH && lookahead instanceof SAEM) ) {
+			if(keyword instanceof BOTH) {
+				s.setSrcPointer(tmpSrcPointer);
+			}
 			if(isOperation(s.lookupToken())) {
 				if(s.lookupToken() instanceof AN) {
 					if(isOperation(s.lookupToken())) {
@@ -357,6 +364,12 @@ public class Parser {
 				throw new ParseException();
 			}
 		} else {
+			if(keyword instanceof BOTH && 
+							!(lookahead instanceof SAEM || 
+									lookahead instanceof OF)) {
+				s.setSrcPointer(tmpSrcPointer);
+				throw new ParseException();
+			}
 			return false;
 		}
 	}
@@ -375,13 +388,15 @@ public class Parser {
 				if(isBoolOp(s.lookupToken())) {
 					if(s.lookupToken() instanceof AN) {
 						if(isBoolOp(s.lookupToken())) {
-							while(!(s.lookupToken() instanceof MKAY)) {
-								if(!(s.lookupToken() instanceof AN)) {
+							Keyword lookupTok = s.lookupToken();
+							while(!(lookupTok instanceof MKAY)) {
+								if(!(lookupTok instanceof AN)) {
 									throw new ParseException();
 								}
 								if(!isBoolOp(s.lookupToken())) {
 									throw new ParseException();
 								}
+								lookupTok = s.lookupToken();
 							}
 							return true;
 						} else {
@@ -416,39 +431,40 @@ public class Parser {
 	public boolean isLoop(Keyword keyword) throws SyntaxException, ParseException {
 		java.lang.String loopLabel = null;
 		if(keyword instanceof IM) {
-			if(s.lookupToken() instanceof IN) {
+			if(lookAhead() instanceof IN) {
+				s.setSrcPointer(tmpSrcPointer);
 				if(s.lookupToken() instanceof YR) {
-					if(s.lookupToken() instanceof Identifier) {
-						Keyword tok = s.lookupToken();
-						if(tok instanceof YR) {
-							Keyword id = null;
-							if((id = s.lookupToken()) instanceof Identifier) {
-								tok = s.lookupToken();
-								loopLabel = id.getAttribute();
-							} else {
-								throw new ParseException();
-							}
+					Keyword id_loop = null;
+					if((id_loop = s.lookupToken()) instanceof Identifier) {
+						loopLabel = id_loop.getAttribute();
+					} else {
+						throw new ParseException();
+					}
+					Keyword tok = null;
+					if((tok = s.lookupToken()) instanceof YR) {
+						if(!(s.lookupToken() instanceof Identifier)) {
+							throw new ParseException();
 						}
-						if(tok instanceof WILE || tok instanceof TIL) {
-							if(isExpr(s.lookupToken())) {
-								tok = s.lookupToken();
-							} else {
-								throw new ParseException();
-							}
+						tok = s.lookupToken();
+					} 
+					
+					if(tok instanceof WILE || tok instanceof TIL) {
+						if(!isExpr(s.lookupToken())) {
+							throw new ParseException();
 						}
-						
-						while(!isStatement(tok));
-						
-						if(s.lookupToken() instanceof IM) {
-							if(s.lookupToken() instanceof OUTTA) {
-								if(s.lookupToken() instanceof YR) {
-									Keyword id = null;
-									if((id = s.lookupToken()) instanceof Identifier) {
-										if(loopLabel.equals(id.getAttribute())) {
-											return true;
-										} else {
-											throw new ParseException();
-										}
+					}
+					
+					tok = s.lookupToken();
+					while(isStatement(tok)) 
+						tok = s.lookupToken();
+					
+					if(tok instanceof IM) {
+						if(s.lookupToken() instanceof OUTTA) {
+							if(s.lookupToken() instanceof YR) {
+								Keyword id = null;
+								if((id = s.lookupToken()) instanceof Identifier) {
+									if(loopLabel.equals(id.getAttribute())) {
+										return true;
 									} else {
 										throw new ParseException();
 									}
@@ -461,7 +477,6 @@ public class Parser {
 						} else {
 							throw new ParseException();
 						}
-						
 					} else {
 						throw new ParseException();
 					}
@@ -469,7 +484,7 @@ public class Parser {
 					throw new ParseException();
 				}
 			} else {
-				throw new ParseException();
+				return false;
 			}
 		} else {
 			return false;
@@ -721,75 +736,6 @@ public class Parser {
 		}
 	}
 	
-//	public boolean checkFollowing(Keyword preK, Keyword postK) {
-//		boolean found = false;
-//		if(preK == null) {
-//			if(postK instanceof CAN || postK instanceof HAI) {
-//				found = true;
-//			}
-//		} else if(preK instanceof CAN) {
-//			if(postK instanceof HAS) {
-//				found = true;
-//			}
-//		} else if(preK instanceof HAI) {
-//			if(postK instanceof I || postK instanceof Identifier
-//					|| postK instanceof SUM || postK instanceof KTHXBYE) {
-//				found = true;
-//			}
-//		} else if(preK instanceof I) {
-//			if(postK instanceof CAN) {
-//				found = true;
-//			}
-//			//keywords[1] = Identifier.class;
-//		} else if(preK instanceof Identifier) {
-//			if(postK instanceof Int || postK instanceof String
-//					|| postK instanceof WIN || postK instanceof FAIL || postK instanceof AN
-//					|| postK instanceof AN || postK instanceof KTHXBYE
-//					|| postK instanceof R || postK instanceof HAI) {
-//				found = true;
-//			}
-//			// TODO: there can be a lot, because all operations 
-//			// might end with an identifier, and the next 
-//			// keyword could be anything
-//		} else if(preK instanceof R) {
-//			if(postK instanceof NUMBR || postK instanceof CHARZ
-//					|| postK instanceof TROOF) {
-//				found = true;
-//			}
-//		} else if(preK instanceof Int) {
-//			if(postK instanceof Identifier || postK instanceof SUM
-//					|| postK instanceof I) {
-//				found = true;
-//			}
-//			// TODO: could be anything
-//		} else if(preK instanceof NUMBR) {
-//			if(postK instanceof Identifier || postK instanceof SUM
-//					|| postK instanceof I) {
-//				found = true;
-//			}
-//			// TODO: could be anything
-//		} else if(preK instanceof SUM) {
-//			if(postK instanceof OF) {
-//				found = true;
-//			}
-//		} else if(preK instanceof OF) {
-//			if(postK instanceof Identifier) {
-//				found = true;
-//			}
-//		} else if(preK instanceof HAS) {
-//			if(postK instanceof Identifier) {
-//				found = true;
-//			}
-//		} else if(preK instanceof KTHXBYE) {
-//			// keyword could be a function
-//		} else if(preK instanceof AN) {
-//			if(postK instanceof Int || postK instanceof Identifier) {
-//				found = true;
-//			}
-//		}
-//		return found;
-//	}
-	
 	public static void main(java.lang.String[] args) {
 //		Parser p = new Parser();
 //		try {
@@ -798,27 +744,16 @@ public class Parser {
 //			e.printStackTrace();
 //		}
 		Parser p = new Parser();
-		p.s = new Scanner("" +
-				"HAI " +
-				"I HAS A var1 " +
-				"I HAS A var2 " +
-				"I HAS A var3 " +
-				"I HAS A var4 " +
-				"var1 IS NOW A NUMBR " +
-				"var2 IS NOW A NUMBR " +
-				"var1 R 3 " +
-				"var2 R 2 " +
-				"var3 R WIN " +
-				"var4 R FAIL " +
-				"SUM OF var1 AN var2 " +
-				"EITHER OF var3 AN var4 " +
-				"ORLY? " +
-				"YA RLY " +
+		p.s = new Scanner("IM IN YR loop YR arg1 WILE BOTH SAEM var2 AN 100 " +
 				"    PRODUKT OF var2 AN var1 " +
-				"OIC " +
-				"KTHXBYE");
+				"    BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"    YA RLY " +
+				"        SUM OF var2 AN var3 " +
+				"    OIC " +
+				"IM OUTTA YR loop ");
 		try {
-			p.isMain(p.s.lookupToken());
+			Assert.assertTrue(p.isLoop(p.s.lookupToken()));
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 			fail();
