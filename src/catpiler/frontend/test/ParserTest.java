@@ -353,6 +353,22 @@ public class ParserTest {
 	}
 	
 	@Test
+	public void testGenExpr3() {
+		Parser p = new Parser();
+		// means: var1 <= 30
+		p.s = new Scanner("BOTH SAEM 30 AN BIGGR OF 30 AN var1");
+		try {
+			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
 	public void testNotGenExpr1() {
 		Parser p = new Parser();
 		p.s = new Scanner("BOTH OF var1 AN var2");
@@ -637,6 +653,322 @@ public class ParserTest {
 				"IM OUTTA YR loop ");
 		try {
 			Assert.assertTrue(p.isLoop(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testIf1() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"        YA RLY " +
+				"            SUM OF var2 AN var3 " +
+				"        MEBBE BOTH SAEM var2 AN 40 " +
+				"            SUM OF var2 AN var4 " +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
+				"            QUOSHUNT OF var3 AN var4 " +
+				"        NO WAI " +
+				"            PRODUKT OF var5 AN var6 " +
+				"    OIC ");
+		try {
+			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testIf2() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"        YA RLY " +
+				"            SUM OF var2 AN var3 " +
+				"        NO WAI " +
+				"            PRODUKT OF var5 AN var6 " +
+				"    OIC ");
+		try {
+			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testIf3() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"        YA RLY " +
+				"            SUM OF var2 AN var3 " +
+				"        MEBBE BOTH SAEM var2 AN 40 " +
+				"            SUM OF var2 AN var4 " +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
+				"            QUOSHUNT OF var3 AN var4 " +
+				"    OIC ");
+		try {
+			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testIf4() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"        YA RLY " +
+				"            SUM OF var2 AN var3 " +
+				"        MEBBE BOTH OF var2 AN WIN " +
+				"            SUM OF var2 AN var4 " +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
+				"            QUOSHUNT OF var3 AN var4 " +
+				"    OIC ");
+		try {
+			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNotIf() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
+				"    ORLY? " +
+				"        YA RLY " +
+				"            SUM OF var2 AN var3 " +
+				"        MEBBE SUM OF var2 AN var4 " +
+				"    OIC ");
+		try {
+			p.isIf(p.s.lookupToken());
+			fail();
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			// expected
+		}
+	}
+	
+	@Test
+	public void testOperation1() {
+		Parser p = new Parser();
+		p.s = new Scanner("BOTH OF var2 AN WIN ");
+		try {
+			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testOperation2() {
+		Parser p = new Parser();
+		p.s = new Scanner("SUM OF var2 AN 30 ");
+		try {
+			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testOperation3() {
+		Parser p = new Parser();
+		p.s = new Scanner("DIFF OF var2 AN 30 ");
+		try {
+			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testOperation4() {
+		Parser p = new Parser();
+		p.s = new Scanner("QUOSHUNT OF SUM OF DIFF OF var1 AN var2 AN 30 AN 40");
+		try {
+			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testOperation5() {
+		Parser p = new Parser();
+		p.s = new Scanner("QUOSHUNT OF 40 AN SUM OF DIFF OF var1 AN var2 AN 30");
+		try {
+			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testStringOp() {
+		Parser p = new Parser();
+		p.s = new Scanner("\"test\"");
+		try {
+			Assert.assertTrue(p.isStringOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNumOp1() {
+		Parser p = new Parser();
+		p.s = new Scanner("DIFF OF 30 AN DIFF OF 40 AN 50");
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNumOp2() {
+		Parser p = new Parser();
+		p.s = new Scanner("30");
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNumOp3() {
+		Parser p = new Parser();
+		p.s = new Scanner("BIGGR OF 30 AN 40");
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNumOp4() {
+		Parser p = new Parser();
+		p.s = new Scanner("SMALLR OF 30 AN 40");
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNum() {
+		Parser p = new Parser();
+		p.s = new Scanner("30");
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testVarAssign() {
+		Parser p = new Parser();
+		p.s = new Scanner("var1 R SUM OF 1 AN 2");
+		try {
+			Assert.assertTrue(p.isVarAssign(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testType() {
+		Parser p = new Parser();
+		p.s = new Scanner("NUMBR");
+		try {
+			Assert.assertTrue(p.isType(p.s.lookupToken()));
+		} catch (SyntaxException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testVarDecl() {
+		Parser p = new Parser();
+		p.s = new Scanner("var1 IS NOW A NUMBR");
+		try {
+			Assert.assertTrue(p.isVarDecl(p.s.lookupToken()));
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 			fail();

@@ -744,16 +744,10 @@ public class Parser {
 //			e.printStackTrace();
 //		}
 		Parser p = new Parser();
-		p.s = new Scanner("IM IN YR loop YR arg1 WILE BOTH SAEM var2 AN 100 " +
-				"    PRODUKT OF var2 AN var1 " +
-				"    BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"    YA RLY " +
-				"        SUM OF var2 AN var3 " +
-				"    OIC " +
-				"IM OUTTA YR loop ");
+		// means: var1 <= 30
+		p.s = new Scanner("BOTH SAEM 30 AN BIGGR OF 30 AN var1");
 		try {
-			Assert.assertTrue(p.isLoop(p.s.lookupToken()));
+			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 			fail();
