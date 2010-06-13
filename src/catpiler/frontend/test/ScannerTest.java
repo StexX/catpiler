@@ -90,16 +90,29 @@ public class ScannerTest {
 	public void testExpectingFailures() {
 		Scanner s1 = new Scanner("BOTHThisIsAnIdentifier 1a1notherID SAEM HOW DUZ I OIC");
 		try {
-			s1.search4Tokens();
-			fail("Expecting exception");
+			Keyword token[] = s1.search4Tokens();
+			Assert.assertNotNull(token[0]);
+			Assert.assertNull(token[1]);
+			Assert.assertNotNull(token[2]);
+			Assert.assertNotNull(token[3]);
+			Assert.assertNotNull(token[4]);
+			Assert.assertNotNull(token[5]);
+			Assert.assertNotNull(token[6]);
 		} catch (SyntaxException e) {
 			e.printStackTrace();
+			fail();
 		}
 		
 		Scanner s2 = new Scanner("BOTHThisIsAnIdentifier 1372g a1n_otherID SAEM HOW DUZ I OIC");
 		try {
-			s2.search4Tokens();
-			fail("Expecting exception");
+			Keyword token[] = s2.search4Tokens();
+			Assert.assertNotNull(token[0]);
+			Assert.assertNull(token[1]);
+			Assert.assertNotNull(token[2]);
+			Assert.assertNotNull(token[3]);
+			Assert.assertNotNull(token[4]);
+			Assert.assertNotNull(token[5]);
+			Assert.assertNotNull(token[6]);
 		} catch (SyntaxException e) {
 			e.printStackTrace();
 		}
@@ -195,656 +208,468 @@ public class ScannerTest {
 	private void testSeq() {
 		Scanner s = new Scanner("AN");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof AN);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof AN);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testOf() {
 		Scanner s = new Scanner("OF");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof OF);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof OF);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testFuncEnd_1() {
 		Scanner s = new Scanner("IF");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof IF);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof IF);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testFuncEnd_2() {
 		Scanner s = new Scanner("YOU");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof YOU);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof YOU);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testFuncEnd_3() {
 		Scanner s = new Scanner("SAY");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof SAY);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof SAY);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testFuncEnd_4() {
 		Scanner s = new Scanner("SO");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof SO);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof SO);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testFunc_1() {
 		Scanner s = new Scanner("HOW");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof HOW);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof HOW);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testFunc_2() {
 		Scanner s = new Scanner("DUZ");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof DUZ);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof DUZ);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testIfEnd() {
 		Scanner s = new Scanner("OIC");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof OIC);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof OIC);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testElse_1() {
 		Scanner s = new Scanner("NO");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof NO);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof NO);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testElse_2() {
 		Scanner s = new Scanner("WAI");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof WAI);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof WAI);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testElseIf() {
 		Scanner s = new Scanner("MEBBE");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof MEBBE);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof MEBBE);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testThen_1() {
 		Scanner s = new Scanner("YA");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof YA);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof YA);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testThen_2() {
 		Scanner s = new Scanner("RLY");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof RLY);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof RLY);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testNeq() {
 		Scanner s = new Scanner("DIFFRINT");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof DIFFRINT);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof DIFFRINT);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testEq_1() {
 		Scanner s = new Scanner("BOTH");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof BOTH);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof BOTH);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testEq_2() {
 		Scanner s = new Scanner("SAEM");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof SAEM);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof SAEM);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testOpEnd() {
 		Scanner s = new Scanner("MKAY");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof MKAY);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof MKAY);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testAny() {
 		Scanner s = new Scanner("ANY");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof ANY);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof ANY);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testAll() {
 		Scanner s = new Scanner("ALL");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof ALL);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof ALL);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testNot() {
 		Scanner s = new Scanner("NOT");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof NOT);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof NOT);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testOr() {
 		Scanner s = new Scanner("EITHER");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof EITHER);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof EITHER);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testAnd() {
 		Scanner s = new Scanner("BOTH");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof BOTH);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof BOTH);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testMin() {
 		Scanner s = new Scanner("SMALLR");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof SMALLR);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof SMALLR);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testMax() {
 		Scanner s = new Scanner("BIGGR");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof BIGGR);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof BIGGR);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testQuot() {
 		Scanner s = new Scanner("QUOSHUNT");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof QUOSHUNT);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof QUOSHUNT);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testProd() {
 		Scanner s = new Scanner("PRODUKT");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof PRODUKT);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof PRODUKT);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testDiff() {
 		Scanner s = new Scanner("DIFF");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof DIFF);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof DIFF);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testSum() {
 		Scanner s = new Scanner("SUM");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof SUM);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof SUM);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testFalse() {
 		Scanner s = new Scanner("FAIL");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof FAIL);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof FAIL);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testTrue() {
 		Scanner s = new Scanner("WIN");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof WIN);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof WIN);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testBool() {
 		Scanner s = new Scanner("TROOF");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof TROOF);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof TROOF);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testInt() {
 		Scanner s = new Scanner("NUMBR");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof NUMBR);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof NUMBR);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testString() {
 		Scanner s = new Scanner("CHARZ");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof CHARZ);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof CHARZ);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testVarAssign() {
 		Scanner s = new Scanner("R");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof R);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof R);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testVarDecl_1() {
 		Scanner s = new Scanner("I");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof I);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof I);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testVarDecl_2() {
 		Scanner s = new Scanner("HAS");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof HAS);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof HAS);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testVarDecl_3() {
 		Scanner s = new Scanner("A");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof A);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof A);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testFileEnd() {
 		Scanner s = new Scanner("KTHXBYE");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof KTHXBYE);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof KTHXBYE);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testFileBegin() {
 		Scanner s = new Scanner("HAI");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof HAI);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof HAI);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testComment_1() {
 		Scanner s = new Scanner("BTW");
 		Keyword t = null;
-		try {
-			t = s.lookupToken();
-			// Comments will be erased. 
-			// We therefore do not expect any token
-			Assert.assertNull(t);
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
+		t = s.lookupToken();
+		// Comments will be erased. 
+		// We therefore do not expect any token
+		Assert.assertNull(t);
 	}
 	
 	private void testComment_2() {
 		Scanner s = new Scanner("OBTW");
 		Keyword t = null;
-		try {
-			t = s.lookupToken();
-			// Comments will be erased. 
-			// We therefore do not expect any token
-			Assert.assertNull(t);
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
+		t = s.lookupToken();
+		// Comments will be erased. 
+		// We therefore do not expect any token
+		Assert.assertNull(t);
 	}
 	
 	private void testComment_3() {
 		Scanner s = new Scanner("TLDR");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof TLDR);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof TLDR);
+		} else {
+			fail("No token found :(");
 		}
 	}
 
 	private void testLoop_1() {
 		Scanner s = new Scanner("IM");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof IM);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof IM);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testLoop_2() {
 		Scanner s = new Scanner("IN");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof IN);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof IN);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testLoop_3() {
 		Scanner s = new Scanner("YR");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof YR);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof YR);
+		} else {
+			fail("No token found :(");
 		}
 	}
 	
 	private void testLoopEnd() {
 		Scanner s = new Scanner("OUTTA");
 		Keyword t = null;
-		try {
-			if((t = s.lookupToken()) != null) {
-				Assert.assertTrue(t instanceof OUTTA);
-			} else {
-				fail("No token found :(");
-			}
-		} catch (SyntaxException e) {
-			e.printStackTrace();
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof OUTTA);
+		} else {
+			fail("No token found :(");
 		}
 	}
 

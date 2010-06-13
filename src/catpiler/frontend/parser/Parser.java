@@ -1,5 +1,5 @@
 /*
- * Scanner.java Copyright (C) 2010 Stephanie Stroka 
+ * Parser.java Copyright (C) 2010 Stephanie Stroka 
  * 
  * This library is free software; you can redistribute it and/or modify it under 
  * the terms of the GNU Lesser General Public License as published by the 
@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 import org.junit.Assert;
 
 import catpiler.frontend.exception.ParseException;
-import catpiler.frontend.exception.SyntaxException;
+import catpiler.frontend.parser.symboltable.Symboltable;
 import catpiler.frontend.scanner.Scanner;
 import catpiler.frontend.scanner.keywords.A;
 import catpiler.frontend.scanner.keywords.ALL;
@@ -55,6 +55,7 @@ import catpiler.frontend.scanner.keywords.Keyword;
 import catpiler.frontend.scanner.keywords.MEBBE;
 import catpiler.frontend.scanner.keywords.MKAY;
 import catpiler.frontend.scanner.keywords.NO;
+import catpiler.frontend.scanner.keywords.NOOB;
 import catpiler.frontend.scanner.keywords.NOT;
 import catpiler.frontend.scanner.keywords.NOW;
 import catpiler.frontend.scanner.keywords.NUMBR;
@@ -75,9 +76,9 @@ import catpiler.frontend.scanner.keywords.STUFF;
 import catpiler.frontend.scanner.keywords.SUM;
 import catpiler.frontend.scanner.keywords.String;
 import catpiler.frontend.scanner.keywords.THATSIT;
+import catpiler.frontend.scanner.keywords.TIL;
 import catpiler.frontend.scanner.keywords.TROOF;
 import catpiler.frontend.scanner.keywords.TROOFZ;
-import catpiler.frontend.scanner.keywords.TIL;
 import catpiler.frontend.scanner.keywords.WAI;
 import catpiler.frontend.scanner.keywords.WILE;
 import catpiler.frontend.scanner.keywords.WIN;
@@ -103,27 +104,43 @@ public class Parser {
 	public Scanner s = null;
 	
 	int tmpSrcPointer = 0;
+	
+	public boolean parseTest = false;
 
+	private Symboltable symboltable;
+	
+	private boolean error;
+	
+	public Parser() {
+		error = false;
+	}
+	
+	private void markError(java.lang.String str) {
+		error = true;
+		System.out.println("Found an error at line " + s.getLineCount() + ": " + str);
+	}
+	
 	/**
 	 * Checks whether the keyword-token indicates the start of
 	 * a module-call <<CAN HAS identifier>>
 	 * 
 	 * @param keyword
 	 * @return
-	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isModule(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isModuleImport(Keyword keyword) throws ParseException {
 		if(keyword instanceof CAN) {
-			if((keyword = s.lookupToken()) instanceof HAS) {
-				if((keyword = s.lookupToken()) instanceof Identifier) {
-					return true;
+			if(lookAhead() instanceof HAS) {
+				adjustSrcPointer();
+				if(lookAhead() instanceof Identifier) {
+					adjustSrcPointer();
 				} else {
-					throw new ParseException();
+					markError("Missing module");
 				}
 			} else {
-				throw new ParseException();
+				markError("Missing 'HAS' keyword");
 			}
+			return true;
 		} else {
 			return false;
 		}
@@ -131,24 +148,28 @@ public class Parser {
 	
 	/**
 	 * Checks whether the keyword-token indicates the start of 
-	 * a structure definition <<STUFF ... THATSIT>>
+	 * a structure definition <<STUFF label ... THATSIT>>
 	 * 
 	 * @param keyword
 	 * @return
-	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isStruct(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isStruct(Keyword keyword) throws ParseException {
 		if(keyword instanceof STUFF) {
+			if(!isIdentifier(lookAhead())) {
+				markError("Missing structure label after 'STUFF'");
+			} else {
+				adjustSrcPointer();
+				// TODO add it to the list of types
+			}
 			Keyword next = null;
 			while(isVarInit(next = s.lookupToken()) || 
 					isVarDecl(next) || 
 					isVarAssign(next));
-			if(next instanceof THATSIT) {
-				return true;
-			} else {
-				return false;
+			if(!(next instanceof THATSIT)) {
+				markError("Missing 'THATSIT' keyword");
 			}
+			return true;
 		} else {
 			return false;
 		}
@@ -160,24 +181,32 @@ public class Parser {
 	 * 
 	 * @param keyword
 	 * @return
-	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isVarInit(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isVarInit(Keyword keyword) throws ParseException {
 		if(keyword instanceof I) {
-			if(s.lookupToken() instanceof HAS) {
-				if(s.lookupToken() instanceof A) {
-					if(s.lookupToken() instanceof Identifier) {
-						return true;
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
+			if(!(lookAhead() instanceof HAS)) {
+				markError("Missing 'HAS' keyword");
 			} else {
-				throw new ParseException();
+				adjustSrcPointer();
 			}
+			if(!(lookAhead() instanceof A)) {
+				markError("Missing 'A' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			Keyword id = lookAhead();
+			if(!(id instanceof Identifier)) {
+				markError("Missing variable");
+			} else {
+				adjustSrcPointer();
+				if(symboltable == null)
+					symboltable = new Symboltable(null);
+				id.setAttribute("0");
+				((Identifier) id).setType(NOOB.tokenId);
+				symboltable.put((Identifier) id);
+			}
+			return true;
 		} else {
 			return false;
 		}
@@ -191,19 +220,19 @@ public class Parser {
 	 * 
 	 * @param keyword
 	 * @return
-	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isProgram(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isProgram(Keyword keyword) throws ParseException {
 		Keyword k = keyword;
-		while(isModule(k)) {
+		while(isModuleImport(k)) {
 			k = s.lookupToken();
 		}
 		while(isStruct(k)) {
 			k = s.lookupToken();
 		}
+		// TODO: Modules don't need a main method,
+		//       figure out how to handle them (separate method)
 		if(isMain(k)) {
-			k = s.lookupToken();
 			while(isFunction(s.lookupToken()));
 			return true;
 		} else {
@@ -220,15 +249,16 @@ public class Parser {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isMain(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isMain(Keyword keyword) throws ParseException {
 		if(keyword instanceof HAI) {
+			symboltable = new Symboltable(null);
 			Keyword next = null;
 			while(isStatement(next = s.lookupToken()));
-			if(next instanceof KTHXBYE) {
-				return true;
-			} else {
-				throw new ParseException();
+			if(!(next instanceof KTHXBYE)) {
+				markError("Missing 'KTHXBYE' keyword");
 			}
+			symboltable = null;
+			return true;
 		} else {
 			return false;
 		}
@@ -243,7 +273,7 @@ public class Parser {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isStatement(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isStatement(Keyword keyword) throws ParseException {
 		if(isVarInit(keyword)) {
 			return true;
 		} else if(isVarDecl(keyword)) {
@@ -270,11 +300,10 @@ public class Parser {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isFuncCall(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isFuncCall(Keyword keyword) throws ParseException {
 		if(isIdentifier(keyword)) {
-			Keyword k = lookAhead();
+			Keyword k = s.lookupToken();
 			while(isExpr(k)) {
-				s.setSrcPointer(tmpSrcPointer);
 				k = s.lookupToken();
 			}
 			return true;
@@ -292,7 +321,7 @@ public class Parser {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isExpr(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isExpr(Keyword keyword) throws ParseException {
 		return (isBiExpr(keyword) || isInfExpr(keyword) );
 				//|| isBool(keyword) || isIdentifier(keyword));
 	}
@@ -306,69 +335,76 @@ public class Parser {
 	 * @throws SyntaxException
 	 * @throws ParseException
 	 */
-	public boolean isBoolOp(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isBoolOp(Keyword keyword) throws ParseException {
 		if(keyword instanceof BOTH || keyword instanceof EITHER) {
-			if(lookAhead() instanceof OF) {
-				s.setSrcPointer(tmpSrcPointer);
-				if(isExpr(s.lookupToken())) {
-					if(s.lookupToken() instanceof AN) {
-						if(isExpr(s.lookupToken())) {
-							return true;
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
-			} else {
+			if(!(lookAhead() instanceof OF)) {
 				if(keyword instanceof BOTH) {
 					return false;
 				} else {
-					throw new ParseException();
+					markError("Missing 'OF' keyword");
 				}
+			} else {
+				adjustSrcPointer();
 			}
+			if(!isExpr(s.lookupToken())) {
+				markError("Expected Expression");
+			}
+			if(!(lookAhead() instanceof AN)) {
+				markError("Missing 'AN' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			if(!isExpr(s.lookupToken())) {
+				markError("Expected expression");
+			}
+			
+			return true;
 		} else if(keyword instanceof NOT) {
-			if(isExpr(s.lookupToken())) {
+			if(!isExpr(s.lookupToken())) {
+				markError("Expected expression");
+			}
+			return true;
+		} else if(isBool(keyword)) {
+			return true;
+		} else if(isIdentifier(keyword)) {
+			if(((Identifier)keyword).getType() != null &&
+					((Identifier)keyword).getType().equals("TROOF") || parseTest) {
 				return true;
 			} else {
-				throw new ParseException();
+				return false;
 			}
-		} else if(isBool(keyword) || isIdentifier(keyword)) {
-			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public boolean isGenExpr(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isGenExpr(Keyword keyword) throws ParseException {
 		Keyword lookahead = lookAhead();
 		if(keyword instanceof DIFFRINT || 
 			(keyword instanceof BOTH && lookahead instanceof SAEM) ) {
 			if(keyword instanceof BOTH) {
-				s.setSrcPointer(tmpSrcPointer);
+				adjustSrcPointer();
 			}
-			if(isOperation(s.lookupToken())) {
-				if(s.lookupToken() instanceof AN) {
-					if(isOperation(s.lookupToken())) {
-						return true;
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
+			if(!isOperation(s.lookupToken())) {
+				markError("Expected a value to compare");
+			}
+			
+			if(!(lookAhead() instanceof AN)) {
+				markError("Missing 'AN' keyword");
 			} else {
-				throw new ParseException();
+				adjustSrcPointer();
 			}
+			
+			if(!isOperation(s.lookupToken())) {
+				markError("Expected a value to compare");
+			}
+			
+			return true;
 		} else {
 			if(keyword instanceof BOTH && 
-							!(lookahead instanceof SAEM || 
-									lookahead instanceof OF)) {
-				s.setSrcPointer(tmpSrcPointer);
-				throw new ParseException();
+							!(lookAhead() instanceof SAEM || 
+									lookAhead() instanceof OF)) {
+				markError("Missing 'SAEM' OR 'OF' keyword");
 			}
 			return false;
 		}
@@ -382,41 +418,52 @@ public class Parser {
 		}
 	}
 
-	public boolean isInfExpr(Keyword keyword) throws ParseException, SyntaxException {
+	public boolean isInfExpr(Keyword keyword) throws ParseException {
 		if(keyword instanceof ALL || keyword instanceof ANY) {
-			if(s.lookupToken() instanceof OF) {
-				if(isBoolOp(s.lookupToken())) {
-					if(s.lookupToken() instanceof AN) {
-						if(isBoolOp(s.lookupToken())) {
-							Keyword lookupTok = s.lookupToken();
-							while(!(lookupTok instanceof MKAY)) {
-								if(!(lookupTok instanceof AN)) {
-									throw new ParseException();
-								}
-								if(!isBoolOp(s.lookupToken())) {
-									throw new ParseException();
-								}
-								lookupTok = s.lookupToken();
-							}
-							return true;
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
+			
+			if(!(lookAhead() instanceof OF)) {
+				markError("Missing 'OF' keyword");
 			} else {
-				throw new ParseException();
+				adjustSrcPointer();
 			}
+			
+			if(!isBoolOp(s.lookupToken())) {
+				markError("Expected boolean variable");
+			}
+			
+			if(!(lookAhead() instanceof AN)) {
+				markError("Missing 'AN' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(isBoolOp(s.lookupToken()))) {
+				markError("Too few arguments");
+			}
+			
+			Keyword lookupTok = lookAhead();
+			while(!(lookupTok instanceof MKAY)) {
+				if(!(lookupTok instanceof AN)) {
+					markError("Missing 'AN' or 'MKAY' keyword");
+					break;
+				} else {
+					adjustSrcPointer();
+					if(!isBoolOp(s.lookupToken())) {
+						markError("Expected boolean variable");
+					}
+					lookupTok = lookAhead();
+				}
+			}
+			if(lookupTok instanceof MKAY) {
+				adjustSrcPointer();
+			}
+			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public boolean isBiExpr(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isBiExpr(Keyword keyword) throws ParseException {
 		if(isBoolOp(keyword) || isGenExpr(keyword)) {
 			return true;
 		} else {
@@ -424,115 +471,146 @@ public class Parser {
 		}
 	}
 
-	public boolean isFlowControl(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isFlowControl(Keyword keyword) throws ParseException {
 		return (isIf(keyword) || isLoop(keyword));
 	}
 
-	public boolean isLoop(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isLoop(Keyword keyword) throws ParseException {
 		java.lang.String loopLabel = null;
 		if(keyword instanceof IM) {
-			if(lookAhead() instanceof IN) {
-				s.setSrcPointer(tmpSrcPointer);
-				if(s.lookupToken() instanceof YR) {
-					Keyword id_loop = null;
-					if((id_loop = s.lookupToken()) instanceof Identifier) {
-						loopLabel = id_loop.getAttribute();
-					} else {
-						throw new ParseException();
-					}
-					Keyword tok = null;
-					if((tok = s.lookupToken()) instanceof YR) {
-						if(!(s.lookupToken() instanceof Identifier)) {
-							throw new ParseException();
-						}
-						tok = s.lookupToken();
-					} 
-					
-					if(tok instanceof WILE || tok instanceof TIL) {
-						if(!isExpr(s.lookupToken())) {
-							throw new ParseException();
-						}
-					}
-					
-					tok = s.lookupToken();
-					while(isStatement(tok)) 
-						tok = s.lookupToken();
-					
-					if(tok instanceof IM) {
-						if(s.lookupToken() instanceof OUTTA) {
-							if(s.lookupToken() instanceof YR) {
-								Keyword id = null;
-								if((id = s.lookupToken()) instanceof Identifier) {
-									if(loopLabel.equals(id.getAttribute())) {
-										return true;
-									} else {
-										throw new ParseException();
-									}
-								} else {
-									throw new ParseException();
-								}
-							} else {
-								throw new ParseException();
-							}
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
-			} else {
+			symboltable = new Symboltable(symboltable);
+			
+			if(!(lookAhead() instanceof IN)) {
 				return false;
+			} else {
+				adjustSrcPointer();
 			}
+			
+			if(!(lookAhead() instanceof YR)) {
+				markError("Missing 'YR' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			Keyword id_loop = lookAhead();
+			if(!(id_loop instanceof Identifier)) {
+				markError("Loop does not have a name");
+				// TODO search for loop end
+			} else {
+				adjustSrcPointer();
+				loopLabel = id_loop.getAttribute();
+			}
+			
+			Keyword tok = s.lookupToken();
+			if(tok instanceof YR) {
+				if(!(lookAhead() instanceof Identifier)) {
+					markError("Too few arguments");
+				} else {
+					adjustSrcPointer();
+				}
+				tok = s.lookupToken();
+			}
+			
+			if(tok instanceof WILE || tok instanceof TIL) {
+				if(!isExpr(s.lookupToken())) {
+					markError("No limiting expression provided");
+				}
+				tok = s.lookupToken();
+			}
+			
+			while(isStatement(tok))
+				tok = s.lookupToken();
+					
+			if(!(tok instanceof IM)) {
+				markError("Expected loop end");
+			}
+			
+			if(!(lookAhead() instanceof OUTTA)) {
+				markError("Missing 'OUTTA' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(lookAhead() instanceof YR)) {
+				markError("Missing 'YR' label");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			Keyword id = lookAhead();
+			if(!(id instanceof Identifier)) {
+				markError("No loop end label provided");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(loopLabel.equals(id.getAttribute()))) {
+				markError("Loop end label does " +
+					"not match the loop begin label");
+			}
+			symboltable = symboltable.getOutterTable();
+			
+			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public boolean isIf(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isIf(Keyword keyword) throws ParseException {
 		if(isExpr(keyword)) {
 			if(lookAhead() instanceof ORLY) {
-				s.setSrcPointer(tmpSrcPointer);
-				if(s.lookupToken() instanceof YA) {
-					if(s.lookupToken() instanceof RLY) {
-						Keyword k = null;
-						if(!isStatement(k = s.lookupToken())) {
-							throw new ParseException();
-						}
-						while(isStatement(k = s.lookupToken()));
-						while(k instanceof MEBBE) {
-							if(isExpr(s.lookupToken())) {
-								if(!isStatement(k = s.lookupToken())) {
-									throw new ParseException();
-								}
-								while(isStatement(k = s.lookupToken()));
-							} else {
-								throw new ParseException();
-							}
-						} 
-						if(k instanceof NO) {
-							if(s.lookupToken() instanceof WAI) {
-								if(!isStatement(k = s.lookupToken())) {
-									throw new ParseException();
-								}
-								while(isStatement(k = s.lookupToken()));
-							} else {
-								throw new ParseException();
-							}
-						}
-						if(k instanceof OIC) {
-							return true;
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
+				adjustSrcPointer();
+				symboltable = new Symboltable(symboltable);
+				
+				if(!(lookAhead() instanceof YA)) {
+					markError("Missing 'YA' keyword");
 				} else {
-					throw new ParseException();
+					adjustSrcPointer();
 				}
+				
+				if(!(lookAhead() instanceof RLY)) {
+					markError("Missing 'RLY' keyword");
+				} else {
+					adjustSrcPointer();
+				}
+				
+				Keyword k = null;
+				if(!isStatement(k = s.lookupToken())) {
+					markError("Expected statement after condition");
+				}
+				
+				while(isStatement(k = s.lookupToken()));
+				
+				while(k instanceof MEBBE) {
+					if(!isExpr(s.lookupToken())) {
+						markError("Expected expression after 'MEBBE'");
+					}
+					
+					if(!isStatement(k = s.lookupToken())) {
+						markError("Expected statement after condition");
+					}
+					
+					while(isStatement(k = s.lookupToken()));
+				}
+				if(k instanceof NO) {
+					if(!(lookAhead() instanceof WAI)) {
+						markError("Missing 'WAI' keyword");
+					} else {
+						adjustSrcPointer();
+					}
+					
+					if(!isStatement(k = s.lookupToken())) {
+						markError("Expected statement after condition");
+					}
+					
+					while(isStatement(k = s.lookupToken()));
+				}
+				if(!(k instanceof OIC)) {
+					markError("Missing 'OIC' keyword");
+				}
+				symboltable = symboltable.getOutterTable();
+				
+				return true;
 			} else {
 				return false;
 			}
@@ -541,37 +619,57 @@ public class Parser {
 		}
 	}
 
-	public boolean isOperation(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isOperation(Keyword keyword) throws ParseException {
 		return isNumOp(keyword) || isBoolOp(keyword) || isStringOp(keyword);
 	}
 
 	public boolean isStringOp(Keyword keyword) {
-		return keyword instanceof String || keyword instanceof Identifier;
+		if(keyword instanceof String) {
+			return true;
+		} else if(keyword instanceof Identifier && 
+				(((Identifier)keyword).getType() != null &&
+				((Identifier)keyword).getType().equals("CHARZ") || parseTest)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
-	public boolean isNumOp(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isNumOp(Keyword keyword) throws ParseException {
 		if(keyword instanceof SUM || keyword instanceof DIFF ||
 				keyword instanceof QUOSHUNT || keyword instanceof PRODUKT ||
 				keyword instanceof BIGGR || keyword instanceof SMALLR) {
-			if(s.lookupToken() instanceof OF) {
-				if(isNumOp(s.lookupToken())) {
-					if(s.lookupToken() instanceof AN) {
-						if(isNumOp(s.lookupToken())) {
-							return true;
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
+			
+			if(!(lookAhead() instanceof OF)) {
+				markError("Missing 'OF' keyword");
 			} else {
-				throw new ParseException();
+				adjustSrcPointer();
 			}
-		} else if(isNum(keyword) || isIdentifier(keyword)) {
+			
+			if(!isNumOp(s.lookupToken())) {
+				markError("Expected numerical operation or number");
+			}
+			
+			if(!(lookAhead() instanceof AN)) {
+				markError("Missing 'AN' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!isNumOp(s.lookupToken())) {
+				markError("Expected numerical operation or number");
+			}
 			return true;
+		} else if(isNum(keyword)) {
+			return true;
+		} else if(isIdentifier(keyword)) {
+			if(((Identifier) keyword).getType() != null && 
+					((Identifier) keyword).getType().equals("NUMBR") || 
+					parseTest) {
+						return true;
+					} else {
+						return false;
+					}
 		} else {
 			return false;
 		}
@@ -581,17 +679,17 @@ public class Parser {
 		return keyword instanceof Int;
 	}
 	
-	public boolean isVarAssign(Keyword keyword) throws SyntaxException, ParseException {
+	public boolean isVarAssign(Keyword keyword) throws ParseException {
 		if(isIdentifier(keyword)) {
 			Keyword k = lookAhead();
 			if(k instanceof R) {
-				s.setSrcPointer(tmpSrcPointer);
-				if(isOperation(s.lookupToken())) {
-					return true;
-				} else {
-					throw new ParseException();
+				adjustSrcPointer();
+				if(!isOperation(s.lookupToken())) {
+					markError("Expected value");
 				}
+				return true;
 			} else {
+				markError("Missing 'R' or 'IS NOW A' keywords after variable");
 				return false;
 			}
 		} else {
@@ -599,23 +697,31 @@ public class Parser {
 		}
 	}
 
-	public boolean isVarDecl(Keyword keyword) throws ParseException, SyntaxException {
+	public boolean isVarDecl(Keyword keyword) throws ParseException {
 		if(isIdentifier(keyword)) {
+			
 			if(lookAhead() instanceof IS) {
-				s.setSrcPointer(tmpSrcPointer);
-				if(s.lookupToken() instanceof NOW) {
-					if(s.lookupToken() instanceof A) {
-						if(isType(s.lookupToken())) {
-							return true;
-						} else {
-							throw new ParseException();
-						}
-					} else {
-						throw new ParseException();
-					}
+				adjustSrcPointer();
+				
+				if(!(lookAhead() instanceof NOW)) {
+					markError("Missing 'NOW' keyword");
 				} else {
-					throw new ParseException();
+					adjustSrcPointer();
 				}
+				
+				if(!(lookAhead() instanceof A)) {
+					markError("Missing 'A' keyword");
+				} else {
+					adjustSrcPointer();
+				}
+				
+				Keyword typeKeyword = s.lookupToken();
+				if(isType(typeKeyword)) {
+					((Identifier) keyword).setType(typeKeyword.getTokenID());
+				} else {
+					markError("Expected a type");
+				}
+				return true;
 			} else {
 				return false;
 			}
@@ -637,83 +743,110 @@ public class Parser {
 		return keyword instanceof Identifier;
 	}
 	
-	public boolean isFunction(Keyword keyword) throws ParseException, SyntaxException {
+	public boolean isFunction(Keyword keyword) throws ParseException {
 		if(keyword instanceof HOW) {
-			if(s.lookupToken() instanceof DUZ) {
-				if(s.lookupToken() instanceof I) {
-					if(s.lookupToken() instanceof Identifier) {
-						
-						Keyword tok = null;
-						if((tok = s.lookupToken()) instanceof YR) {
-							if(s.lookupToken() instanceof Identifier) {
-								while(s.lookupToken() instanceof AN) {
-									if(s.lookupToken() instanceof YR) {
-										if(!(s.lookupToken() instanceof Identifier)) {
-											throw new ParseException();
-										}
-									} else {
-										throw new ParseException();
-									}
-								}
-							} else {
-								throw new ParseException();
-							}
-						}
-						
-						while(isStatement(tok) || 
-								tok instanceof GTFO || 
-								tok instanceof FOUND) {
-							
-							if(tok instanceof FOUND) {
-								if(!(s.lookupToken() instanceof YR)) {
-									throw new ParseException();
-								}
-								if(!isExpr(s.lookupToken())) {
-									throw new ParseException();
-								}
-							}
-							tok = s.lookupToken();
-						}
-						
-						if(tok instanceof IF) {
-							if(s.lookupToken() instanceof YOU) {
-								if(s.lookupToken() instanceof SAY) {
-									if(s.lookupToken() instanceof SO) {
-										return true;
-									} else {
-										throw new ParseException();
-									}
-								} else {
-									throw new ParseException();
-								}
-							} else {
-								throw new ParseException();
-							}
-						} else {
-							throw new ParseException();
-						}
-						
-					} else {
-						throw new ParseException();
-					}
-				} else {
-					throw new ParseException();
-				}
+			
+			symboltable = new Symboltable(null);
+			
+			if(!(lookAhead() instanceof DUZ)) {
+				markError("Missing 'DUZ' keyword");
 			} else {
-				throw new ParseException();
+				adjustSrcPointer();
 			}
+			
+			if(!(lookAhead() instanceof I)) {
+				markError("Missing 'I' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(lookAhead() instanceof Identifier)) {
+				markError("Expected function label");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			Keyword tok = lookAhead();
+			if(tok instanceof YR) {
+				adjustSrcPointer();
+				if(!(lookAhead() instanceof Identifier)) {
+					markError("Expected another argument");
+				} else {
+					adjustSrcPointer();
+				}
+				
+				while((tok = lookAhead()) instanceof AN) {
+					adjustSrcPointer();
+					if(!(lookAhead() instanceof YR)) {
+						markError("Missing 'YR' keyword");
+					} else {
+						adjustSrcPointer();
+					}
+					if(!(lookAhead() instanceof Identifier)) {
+						markError("Expected another argument");
+					} else {
+						adjustSrcPointer();
+					}
+				}
+			}
+			
+			adjustSrcPointer();
+			while(!(tok instanceof IF)) {
+				if(!(isStatement(tok) 
+						|| (tok instanceof GTFO)
+						|| (tok instanceof FOUND))) {
+					markError("Expected statement");
+				} else if(tok instanceof FOUND) {
+					if(!(lookAhead() instanceof YR)) {
+						markError("Missing 'YR' keyword");
+					} else {
+						adjustSrcPointer();
+					}
+					
+					if(!isExpr(s.lookupToken())) {
+						markError("Expected return value");
+					}
+				}
+				tok = s.lookupToken();
+			}
+			
+			if(!(lookAhead() instanceof YOU)) {
+				markError("Missing 'YOU' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(lookAhead() instanceof SAY)) {
+				markError("Missing 'SAY' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			if(!(lookAhead() instanceof SO)) {
+				markError("Missing 'SO' keyword");
+			} else {
+				adjustSrcPointer();
+			}
+			
+			symboltable = symboltable.getOutterTable();
+			
+			return true;
 		} else {
 			return false;
 		}
 		
 	}
 	
-	public Keyword lookAhead() throws SyntaxException {
+	public Keyword lookAhead() {
 		Keyword nextToken = s.lookupToken();
 		int i = s.getPointerBeforeToken();
 		tmpSrcPointer = s.getSrcPointer();
 		s.setSrcPointer(i);
 		return nextToken;
+	}
+	
+	public void adjustSrcPointer() {
+		s.setSrcPointer(tmpSrcPointer);
 	}
 
 	public void parse() throws ParseException {
@@ -729,28 +862,39 @@ public class Parser {
 				"SUM OF var1 AN var2 " +
 				"KTHXBYE");
 
-		try {
-			isProgram(s.lookupToken());
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
+		isProgram(s.lookupToken());
 	}
 	
+	public boolean isError() {
+		return error;
+	}
+
+	public void setError(boolean error) {
+		this.error = error;
+	}
+
 	public static void main(java.lang.String[] args) {
-//		Parser p = new Parser();
-//		try {
-//			p.parse();
-//		} catch (ParseException e) {
-//			e.printStackTrace();
-//		}
 		Parser p = new Parser();
-		// means: var1 <= 30
-		p.s = new Scanner("BOTH SAEM 30 AN BIGGR OF 30 AN var1");
+		p.parseTest = true;
+		p.s = new Scanner("" +
+				"HAI " +
+				"I HAS A var1 " +
+				"I HAS A var2 " +
+				"var1 IS NOW A NUMBR " +
+				"var2 IS NOW A NUMBR " +
+				"var1 R 3 " +
+				"var2 R 2 " +
+				"var3 R WIN " +
+				"var4 R FAIL " +
+				"SUM OF var1 AN var2 " +
+				"EITHER OF var3 AN var4 " +
+				"ORLY? " +
+				"YA RLY " +
+				"    PRODUKT OF var2 AN var1 " +
+				"OIC " +
+				"KTHXBYE");
 		try {
-			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-			fail();
+			Assert.assertTrue(p.isMain(p.s.lookupToken()));
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();

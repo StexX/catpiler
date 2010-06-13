@@ -18,7 +18,7 @@ public final static java.lang.String tokenId = "NOOB";
 	
 	@Override
 	public java.lang.String getTokenID() {
-		return NOT.tokenId;
+		return NOOB.tokenId;
 	}
 
 }

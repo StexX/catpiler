@@ -65,6 +65,8 @@ public class Scanner {
 	
 	private int pointerBeforeToken;
 	
+	private int lineCount;
+	
 	/**
 	 * Initializes the Scanner variables
 	 * @param input
@@ -74,6 +76,7 @@ public class Scanner {
 		src_pointer = 0;
 		pointerBeforeToken = 0;
 		token_pointer = 0;
+		lineCount = 1;
 	}	
 	
 	/**
@@ -87,7 +90,7 @@ public class Scanner {
 	 * @throws SyntaxException Thrown if the syntax of the current 
 	 * token is incorrect.
 	 */
-	public Keyword lookupToken() throws SyntaxException {
+	public Keyword lookupToken() {
 		
 		pointerBeforeToken = src_pointer;
 		current_token = new char[100];
@@ -154,7 +157,8 @@ public class Scanner {
 		if(t == null) {
 			t = new Identifier();
 		}
-		
+
+		boolean fail = false;
 		if(t instanceof Identifier) {
 			// if the token was recognized to be an id, but contains
 			// characters other than letters, digits and underscores,
@@ -164,7 +168,7 @@ public class Scanner {
 					current_token[token_pointer] == '_' ||
 					current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
 				//fail
-				throw new SyntaxException();
+				fail = true;
 			}
 			while(!(readWhiteSpace() || readEOS())) {
 				readNextChar();
@@ -173,36 +177,49 @@ public class Scanner {
 						current_token[token_pointer] == '_' ||
 						current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
 					//fail
-					throw new SyntaxException("Syntaxerror on identifier " + new String(current_token));
+					fail = true;
 				}
 			}
 			token_pointer++;
 			current_token[token_pointer] = '\0';
-			t.setAttribute(new String(current_token));	
+			if(fail) {
+				System.out.println("Syntax error on identifier " + new String(current_token));
+				return null;
+			}
+			((Identifier) t).setName(new String(current_token));
+//			t.setAttribute(new String(current_token));
 		} else if(t instanceof Int) {
 			// if the token was recognized to be an int (that is, if
 			// the first char is a number), but continues with another
 			// char somewhere, it is identified as a syntax error
 			if(current_token[token_pointer] != '\0') {
 				if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
-					//fail
-					throw new SyntaxException();
+					fail = true;
 				}
 				while(!(readWhiteSpace() || readEOS())) {
 					readNextChar();
 					if(!(current_token[token_pointer] >= '0' && current_token[token_pointer] <= '9')) {
-						//fail
-						throw new SyntaxException();
+						fail = true;
 					}
 				}
 				token_pointer++;
 				current_token[token_pointer] = '\0';
+				if(fail) {
+					System.out.println("Syntax error on number " + new String(current_token));
+					return null;
+				}
 			}
 			t.setAttribute(new String(current_token));
 		} else if(t instanceof catpiler.frontend.scanner.keywords.String) {
 			while(!(current_token[token_pointer] == '\"' && 
 					current_token[token_pointer-1] != ':')) {
 				readNextChar();
+				if(current_token[token_pointer] == '\0') {
+					fail = true;
+					System.out.println("Syntax error on string " + new String(current_token) + 
+							". Expected \".");
+					return null;
+				}
 			}
 			token_pointer++;
 			current_token[token_pointer] = '\0';
@@ -216,8 +233,7 @@ public class Scanner {
 			return lookupToken();
 		}
 		
-		// return token
-		// TODO: what if it's null?
+		// return token or null if no token has been found
 		return t;
 	}
 	
@@ -228,6 +244,8 @@ public class Scanner {
 	private boolean readWhiteSpace() {
 		if(src_pointer < source.length && source[src_pointer] != '\0' 
 			&& (source[src_pointer] == ' ' || source[src_pointer] == '\n')) {
+			if(source[src_pointer] == '\n')
+				lineCount++;
 			src_pointer++;
 			return true;
 		}
@@ -242,13 +260,9 @@ public class Scanner {
 			src_pointer++;
 		} else {
 			while(src_pointer < source.length) {
-				try {
-					if(lookupToken() instanceof TLDR) {
-						// found the end
-						return;
-					}
-				} catch (SyntaxException e) {
-					// don't care about SyntaxExceptions in the comment
+				if(lookupToken() instanceof TLDR) {
+					// found the end
+					return;
 				}
 			}
 		}
@@ -305,13 +319,12 @@ public class Scanner {
 		Keyword[] tokens = new Keyword[100];
 		
 		int i = 0;
-		Keyword t = null;
 		src_pointer = 0;
 		// searches tokens in the source code, appends them in
 		// the tokens array and moves the src_pointer to the unread
 		// characters
-		while(src_pointer < source.length && (t = lookupToken()) != null) {
-			tokens[i] = t;
+		while(src_pointer < source.length) {
+			tokens[i] = lookupToken();
 			i++;
 		}
 		
@@ -325,24 +338,28 @@ public class Scanner {
 	public int getSrcPointer() {
 		return src_pointer;
 	}
+	
+	public int getLineCount() {
+		return lineCount;
+	}
+
+	public void setLineCount(int lineCount) {
+		this.lineCount = lineCount;
+	}
 
 	public static void main(String[] args) {
 		Scanner s = new Scanner("var1 R 3 ");
-		try {
-			Keyword k1 = s.lookupToken();
-			Assert.assertTrue(k1 instanceof Identifier);
-			System.out.println("first token: " + k1.getTokenID());
-			Keyword k2 = s.lookupToken();
-			Assert.assertTrue(k2 instanceof R);
-			System.out.println("second token: " + k2.getTokenID());
-			Keyword k3 = s.lookupToken();
-			Assert.assertTrue(k3 instanceof Int);
-			System.out.println("third token: " + k3.getTokenID());
-		} catch (SyntaxException e) {
-			e.printStackTrace();
-		}
+		Keyword k1 = s.lookupToken();
+		Assert.assertTrue(k1 instanceof Identifier);
+		System.out.println("first token: " + k1.getTokenID());
+		Keyword k2 = s.lookupToken();
+		Assert.assertTrue(k2 instanceof R);
+		System.out.println("second token: " + k2.getTokenID());
+		Keyword k3 = s.lookupToken();
+		Assert.assertTrue(k3 instanceof Int);
+		System.out.println("third token: " + k3.getTokenID());
 	}
-	
+
 //	public static void main(String[] args) {
 ////		Scanner s = new Scanner("BTW BOTHThisIsAnIdentifier 1test blafasel anotherID \n  \"someStr\" 1337 SAEM HOW DUZ I OIC");
 ////		Token[] tokens = null;
