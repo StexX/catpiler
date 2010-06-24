@@ -20,7 +20,6 @@ package catpiler.frontend.parser.symboltable;
 import java.util.HashMap;
 
 import catpiler.frontend.exception.TypeCheckingException;
-import catpiler.frontend.scanner.keywords.Identifier;
 
 /**
  * This class represents a symbol table for a particular code block,
@@ -48,7 +47,7 @@ public class Symboltable {
 	 * The hashEntry containing a set of identifier names and
 	 * their identifier objects
 	 */
-	private HashMap<String,Identifier> hashEntry;
+	private HashMap<String,SymboltableEntry> hashEntry;
 	
 	/**
 	 * The constructor for the Symboltable
@@ -59,7 +58,7 @@ public class Symboltable {
 //		this.name = name;
 		this.outterTable = outterTable;
 		
-		this.hashEntry = new HashMap<String, Identifier>();
+		this.hashEntry = new HashMap<String, SymboltableEntry>();
 	}
 
 	/**
@@ -68,7 +67,7 @@ public class Symboltable {
 	 * @param id
 	 * @throws TypeCheckingException
 	 */
-	public void put(Identifier id) {
+	public void put(SymboltableEntry id) {
 		System.out.println(
 				"Put " + id.getName() + 
 				" : " + id.getAttribute() + 
@@ -83,7 +82,13 @@ public class Symboltable {
 	 * @return
 	 */
 	public boolean exists(String varName) {
-		return hashEntry.containsKey(varName);
+		if(hashEntry.containsKey(varName))
+			return true;
+		else if(outterTable != null){
+			return outterTable.exists(varName);
+		} else {
+			return false;
+		}
 	}
 	
 	/**
@@ -93,14 +98,14 @@ public class Symboltable {
 	 * @param varName
 	 * @return
 	 */
-	public Identifier get(String varName) {
-		if(exists(varName))
+	public SymboltableEntry get(String varName) {
+		if(hashEntry.containsKey(varName))
 			return hashEntry.get(varName);
-		while(outterTable != null) {
-			if(outterTable.exists(varName))
-				return outterTable.hashEntry.get(varName);
+		else if(outterTable != null) {
+			return outterTable.get(varName);
+		} else {
+			return null;
 		}
-		return null;
 	}
 	
 	/**

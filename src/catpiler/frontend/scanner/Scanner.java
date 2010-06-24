@@ -181,12 +181,15 @@ public class Scanner {
 				}
 			}
 			token_pointer++;
-			current_token[token_pointer] = '\0';
+//			current_token[token_pointer] = '\0';
+			String current_token_str = new String(current_token).substring(0, token_pointer);
 			if(fail) {
-				System.out.println("Syntax error on identifier " + new String(current_token));
+				System.out.println("Syntax error on identifier " + current_token_str);
 				return null;
 			}
-			((Identifier) t).setName(new String(current_token));
+			
+			// cutting down the '\0' character:
+			t.setAttribute(current_token_str);
 //			t.setAttribute(new String(current_token));
 		} else if(t instanceof Int) {
 			// if the token was recognized to be an int (that is, if
@@ -203,13 +206,14 @@ public class Scanner {
 					}
 				}
 				token_pointer++;
-				current_token[token_pointer] = '\0';
+//				current_token[token_pointer] = '\0';
 				if(fail) {
 					System.out.println("Syntax error on number " + new String(current_token));
 					return null;
 				}
 			}
-			t.setAttribute(new String(current_token));
+			String current_token_str = new String(current_token).substring(0, token_pointer);
+			t.setAttribute(current_token_str);
 		} else if(t instanceof catpiler.frontend.scanner.keywords.String) {
 			while(!(current_token[token_pointer] == '\"' && 
 					current_token[token_pointer-1] != ':')) {
@@ -222,8 +226,9 @@ public class Scanner {
 				}
 			}
 			token_pointer++;
-			current_token[token_pointer] = '\0';
-			t.setAttribute(new String(current_token));
+//			current_token[token_pointer] = '\0';
+			String current_token_str = new String(current_token).substring(0, token_pointer);
+			t.setAttribute(current_token_str);
 		} else if(t instanceof BTW) {
 			// skip until next LF '\n'
 			eraseComment(false);

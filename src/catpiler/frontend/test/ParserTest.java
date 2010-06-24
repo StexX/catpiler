@@ -16,13 +16,13 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		p.s = new Scanner("" +
-				"STUFF label " +
-				"I HAS A var1 " +
-				"I HAS A var2 " +
-				"var1 IS NOW A NUMBR " +
-				"var2 IS NOW A NUMBR " +
-				"var1 R 3 " +
-				"var2 R 2 " +
+				"STUFF label \n" +
+				"I HAS A var1 \n" +
+				"I HAS A var2 \n" +
+				"var1 IS NOW A NUMBR \n" +
+				"var2 IS NOW A NUMBR \n" +
+				"var1 R 3 \n" +
+				"var2 R 2 \n" +
 				"THATSIT");
 
 		try {
@@ -71,12 +71,12 @@ public class ParserTest {
 		p.s = new Scanner("" +
 				"CAN HAS fileId \n" +
 				"STUFF label \n" +
-				"I HAS A var1 \n" +
-				"I HAS A var2 \n" +
-				"var1 IS NOW A NUMBR \n" +
-				"var2 IS NOW A NUMBR \n" +
-				"var1 R 3 \n" +
-				"var2 R 2 \n" +
+				"    I HAS A var1 \n" +
+				"    I HAS A var2 \n" +
+				"    var1 IS NOW A NUMBR \n" +
+				"    var2 IS NOW A NUMBR \n" +
+				"    var1 R 3 \n" +
+				"    var2 R 2 \n" +
 				"THATSIT \n" +
 				"HAI \n" +
 				"    I HAS A var1 \n" +
@@ -108,7 +108,7 @@ public class ParserTest {
 		System.out.println("---- expecting error notice 'testProgram2' ----");
 		p.s = new Scanner("" +
 				"CAN HAS fileId \n" +
-				"STUFF \n" +
+				"STUFF label \n" +
 				"I HAS A var1 \n" +
 				"I HAS A var2 \n" +
 				"var1 IS NOW A NUMBR \n" +
@@ -145,21 +145,25 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		p.s = new Scanner("" +
-				"HAI " +
-				"I HAS A var1 " +
-				"I HAS A var2 " +
-				"var1 IS NOW A NUMBR " +
-				"var2 IS NOW A NUMBR " +
-				"var1 R 3 " +
-				"var2 R 2 " +
-				"var3 R WIN " +
-				"var4 R FAIL " +
-				"SUM OF var1 AN var2 " +
-				"EITHER OF var3 AN var4 " +
-				"ORLY? " +
-				"YA RLY " +
-				"    PRODUKT OF var2 AN var1 " +
-				"OIC " +
+				"HAI \n" +
+				"I HAS A var1 \n" +
+				"I HAS A var2 \n" +
+				"I HAS A var3 \n" +
+				"I HAS A var4 \n" +
+				"var1 IS NOW A NUMBR \n" +
+				"var2 IS NOW A NUMBR \n" +
+				"var3 IS NOW A TROOF \n" +
+				"var4 IS NOW A TROOF \n" +
+				"var1 R 3 \n" +
+				"var2 R 2 \n" +
+				"var3 R WIN \n" +
+				"var4 R FAIL \n" +
+				"SUM OF var1 AN var2 \n" +
+				"EITHER OF var3 AN var4 \n" +
+				"ORLY? \n" +
+				"YA RLY \n" +
+				"    PRODUKT OF var2 AN var1 \n" +
+				"OIC \n" +
 				"KTHXBYE");
 		try {
 			Assert.assertTrue(p.isMain(p.s.lookupToken()));
@@ -175,10 +179,14 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		p.s = new Scanner("" +
-				"EITHER OF var3 AN var4 " +
-				"ORLY? " +
-				"YA RLY " +
-				"    PRODUKT OF var2 AN var1 " +
+				"I HAS A var1 \n" +
+				"I HAS A var2 \n" +
+				"I HAS A var3 \n" +
+				"I HAS A var4 \n" +
+				"EITHER OF var3 AN var4 \n" +
+				"ORLY? \n" +
+				"YA RLY \n" +
+				"    PRODUKT OF var2 AN var1 \n" +
 				"OIC ");
 		try {
 			Assert.assertTrue(p.isStatement(p.s.lookupToken()));
@@ -196,6 +204,7 @@ public class ParserTest {
 		p.s = new Scanner("function1");
 		try {
 			Assert.assertTrue(p.isFuncCall(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -209,6 +218,7 @@ public class ParserTest {
 		p.s = new Scanner("function1 var1 2 \"str\"");
 		try {
 			Assert.assertTrue(p.isFuncCall(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -222,6 +232,7 @@ public class ParserTest {
 		p.s = new Scanner("function1 var1 SUM OF 2 AN 3");
 		try {
 			Assert.assertTrue(p.isFuncCall(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -235,6 +246,7 @@ public class ParserTest {
 		p.s = new Scanner("ANY OF WIN AN FAIL AN FAIL MKAY");
 		try {
 			Assert.assertTrue(p.isExpr(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -248,6 +260,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH SAEM 2 AN var2");
 		try {
 			Assert.assertTrue(p.isExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -261,6 +274,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF var1 AN var2");
 		try {
 			Assert.assertTrue(p.isExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -274,6 +288,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF var1 AN var2");
 		try {
 			Assert.assertTrue(p.isBoolOp(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -287,6 +302,7 @@ public class ParserTest {
 		p.s = new Scanner("EITHER OF WIN AN var2");
 		try {
 			Assert.assertTrue(p.isBoolOp(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -300,6 +316,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF FAIL AN var2");
 		try {
 			Assert.assertTrue(p.isBoolOp(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -313,6 +330,7 @@ public class ParserTest {
 		p.s = new Scanner("WIN");
 		try {
 			Assert.assertTrue(p.isBoolOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -326,6 +344,7 @@ public class ParserTest {
 		p.s = new Scanner("FAIL");
 		try {
 			Assert.assertTrue(p.isBoolOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -339,6 +358,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH SAEM var1 AN var2");
 		try {
 			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -352,6 +372,7 @@ public class ParserTest {
 		p.s = new Scanner("DIFFRINT var1 AN var2");
 		try {
 			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -366,6 +387,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH SAEM 30 AN BIGGR OF 30 AN var1");
 		try {
 			Assert.assertTrue(p.isGenExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -379,6 +401,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF var1 AN var2");
 		try {
 			Assert.assertFalse(p.isGenExpr(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -393,6 +416,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH var1 AN var2");
 		try {
 			p.isGenExpr(p.s.lookupToken());
+			Assert.assertTrue(p.isError());
 //			fail();
 			System.out.println("-----------------------------------------");
 		} catch (ParseException e) {
@@ -408,6 +432,7 @@ public class ParserTest {
 		p.parseTest = true;
 		p.s = new Scanner("WIN");
 		Assert.assertTrue(p.isBool(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -416,6 +441,7 @@ public class ParserTest {
 		p.parseTest = true;
 		p.s = new Scanner("FAIL");
 		Assert.assertTrue(p.isBool(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -450,6 +476,7 @@ public class ParserTest {
 		p.s = new Scanner("ALL OF var1 AN var2 AN var3 MKAY");
 		try {
 			Assert.assertTrue(p.isInfExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -464,6 +491,7 @@ public class ParserTest {
 		p.s = new Scanner("ANY OF var1 AN var2 AN var3 MKAY");
 		try {
 			Assert.assertTrue(p.isInfExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -478,7 +506,7 @@ public class ParserTest {
 		p.s = new Scanner("ANY OF var1 AN var2 AN var3");
 		try {
 			p.isInfExpr(p.s.lookupToken());
-//			fail();
+			Assert.assertTrue(p.isError());
 			System.out.println("-----------------------------------------");
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -495,7 +523,7 @@ public class ParserTest {
 				"AN var4 MMKAY \n");
 		try {
 			p.isInfExpr(p.s.lookupToken());
-//			fail();
+			Assert.assertTrue(p.isError());
 			System.out.println("-----------------------------------------");
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -511,6 +539,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF var1 AN var2");
 		try {
 			Assert.assertTrue(p.isBiExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -525,6 +554,7 @@ public class ParserTest {
 		p.s = new Scanner("EITHER OF var1 AN var2");
 		try {
 			Assert.assertTrue(p.isBiExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -539,6 +569,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH SAEM var1 AN var2");
 		try {
 			Assert.assertTrue(p.isBiExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -553,6 +584,7 @@ public class ParserTest {
 		p.s = new Scanner("DIFFRINT var1 AN var2");
 		try {
 			Assert.assertTrue(p.isBiExpr(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -567,6 +599,7 @@ public class ParserTest {
 		p.s = new Scanner("SUM OF var1 AN var2");
 		try {
 			Assert.assertFalse(p.isBiExpr(p.s.lookupToken()));
+//			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -578,13 +611,15 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testFlowControl1' ----");
-		p.s = new Scanner("BOTH OF WIN AN WIN " +
+//		p.s = new Scanner("BOTH OF WIN AN WIN " +
+		p.s = new Scanner("" +
 				"ORLY? " +
 				"YA RLY " +
 				"    PRODUKT OF var2 AN var1 " +
 				"OIC ");
 		try {
 			Assert.assertTrue(p.isFlowControl(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -596,15 +631,17 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testFlowControl2' ----");
-		p.s = new Scanner("BOTH OF WIN AN WIN " +
-				"ORLY? " +
-				"YA RLY " +
-				"    IM IN YR loop TIL BOTH SAEM var2 AN 100 " +
-				"        PRODUKT OF var2 AN var1 " +
-				"    IM OUTTA YR loop " +
+//		p.s = new Scanner("BOTH OF WIN AN WIN \n" +
+		p.s = new Scanner("" +
+				"ORLY? \n" +
+				"YA RLY \n" +
+				"    IM IN YR loop TIL BOTH SAEM var2 AN 100 \n" +
+				"        PRODUKT OF var2 AN var1 \n" +
+				"    IM OUTTA YR loop \n" +
 				"OIC ");
 		try {
 			Assert.assertTrue(p.isFlowControl(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -616,16 +653,17 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testLoop1' ----");
-		p.s = new Scanner("IM IN YR loop TIL BOTH SAEM var2 AN 100 " +
-				"    PRODUKT OF var2 AN var1 " +
-				"    BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        OIC " +
-				"IM OUTTA YR loop ");
+		p.s = new Scanner("IM IN YR loop TIL BOTH SAEM var2 AN 100 \n" +
+				"    PRODUKT OF var2 AN var1 \n" +
+				"    BOTH SAEM var2 AN 30 \n" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        OIC \n" +
+				"IM OUTTA YR loop \n");
 		try {
 			Assert.assertTrue(p.isLoop(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -637,16 +675,17 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testLoop2' ----");
-		p.s = new Scanner("IM IN YR loop YR arg1 WILE BOTH SAEM var2 AN 100 " +
-				"    PRODUKT OF var2 AN var1 " +
-				"    BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        OIC " +
+		p.s = new Scanner("IM IN YR loop YR arg1 WILE BOTH SAEM var2 AN 100 \n" +
+				"    PRODUKT OF var2 AN var1 \n" +
+				"    BOTH SAEM var2 AN 30 \n" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        OIC \n" +
 				"IM OUTTA YR loop ");
 		try {
 			Assert.assertTrue(p.isLoop(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -658,19 +697,21 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testIf1' ----");
-		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        MEBBE BOTH SAEM var2 AN 40 " +
-				"            SUM OF var2 AN var4 " +
-				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
-				"            QUOSHUNT OF var3 AN var4 " +
-				"        NO WAI " +
-				"            PRODUKT OF var5 AN var6 " +
+//		p.s = new Scanner("BOTH SAEM var2 AN 30 \n" +
+		p.s = new Scanner("" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        MEBBE BOTH SAEM var2 AN 40 \n" +
+				"            SUM OF var2 AN var4 \n" +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY \n" +
+				"            QUOSHUNT OF var3 AN var4 \n" +
+				"        NO WAI \n" +
+				"            PRODUKT OF var5 AN var6 \n" +
 				"    OIC ");
 		try {
 			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -682,15 +723,17 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testIf2' ----");
-		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        NO WAI " +
-				"            PRODUKT OF var5 AN var6 " +
+//		p.s = new Scanner("BOTH SAEM var2 AN 30 \n" +
+		p.s = new Scanner("" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        NO WAI \n" +
+				"            PRODUKT OF var5 AN var6 \n" +
 				"    OIC ");
 		try {
 			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -702,17 +745,19 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testIf3' ----");
-		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        MEBBE BOTH SAEM var2 AN 40 " +
-				"            SUM OF var2 AN var4 " +
-				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
-				"            QUOSHUNT OF var3 AN var4 " +
+//		p.s = new Scanner("BOTH SAEM var2 AN 30 \n" +
+		p.s = new Scanner("" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        MEBBE BOTH SAEM var2 AN 40 \n" +
+				"            SUM OF var2 AN var4 \n" +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY \n" +
+				"            QUOSHUNT OF var3 AN var4 \n" +
 				"    OIC ");
 		try {
 			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -724,17 +769,19 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- 'testIf4' ----");
-		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        MEBBE BOTH OF var2 AN WIN " +
-				"            SUM OF var2 AN var4 " +
-				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY " +
-				"            QUOSHUNT OF var3 AN var4 " +
+//		p.s = new Scanner("BOTH SAEM var2 AN 30 \n" +
+		p.s = new Scanner("" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        MEBBE BOTH OF var2 AN WIN \n" +
+				"            SUM OF var2 AN var4 \n" +
+				"        MEBBE ALL OF WIN AN WIN AN WIN MKAY \n" +
+				"            QUOSHUNT OF var3 AN var4 \n" +
 				"    OIC ");
 		try {
 			Assert.assertTrue(p.isIf(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -746,15 +793,16 @@ public class ParserTest {
 		Parser p = new Parser();
 		p.parseTest = true;
 		System.out.println("---- expecting error notice 'testNotIf' ----");
-		p.s = new Scanner("BOTH SAEM var2 AN 30 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var2 AN var3 " +
-				"        MEBBE SUM OF var2 AN var4 " +
+//		p.s = new Scanner("BOTH SAEM var2 AN 30 \n" +
+		p.s = new Scanner("" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var2 AN var3 \n" +
+				"        MEBBE SUM OF var2 AN var4 \n" +
 				"    OIC ");
 		try {
 			p.isIf(p.s.lookupToken());
-//			fail();
+			Assert.assertTrue(p.isError());
 			System.out.println("-----------------------------------------");
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -770,6 +818,7 @@ public class ParserTest {
 		p.s = new Scanner("BOTH OF var2 AN WIN ");
 		try {
 			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -784,6 +833,7 @@ public class ParserTest {
 		p.s = new Scanner("SUM OF var2 AN 30 ");
 		try {
 			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -798,6 +848,7 @@ public class ParserTest {
 		p.s = new Scanner("DIFF OF var2 AN 30 ");
 		try {
 			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -812,6 +863,7 @@ public class ParserTest {
 		p.s = new Scanner("QUOSHUNT OF SUM OF DIFF OF var1 AN var2 AN 30 AN 40");
 		try {
 			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -826,6 +878,7 @@ public class ParserTest {
 		p.s = new Scanner("QUOSHUNT OF 40 AN SUM OF DIFF OF var1 AN var2 AN 30");
 		try {
 			Assert.assertTrue(p.isOperation(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -839,6 +892,7 @@ public class ParserTest {
 		System.out.println("---- 'testStringOp' ----");
 		p.s = new Scanner("\"test\"");
 		Assert.assertTrue(p.isStringOp(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -849,6 +903,7 @@ public class ParserTest {
 		p.s = new Scanner("DIFF OF 30 AN DIFF OF 40 AN 50");
 		try {
 			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -863,6 +918,7 @@ public class ParserTest {
 		p.s = new Scanner("30");
 		try {
 			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -877,6 +933,7 @@ public class ParserTest {
 		p.s = new Scanner("BIGGR OF 30 AN 40");
 		try {
 			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -891,6 +948,7 @@ public class ParserTest {
 		p.s = new Scanner("SMALLR OF 30 AN 40");
 		try {
 			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -905,6 +963,7 @@ public class ParserTest {
 		p.s = new Scanner("30");
 		try {
 			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(!p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -919,6 +978,7 @@ public class ParserTest {
 		p.s = new Scanner("var1 R SUM OF 1 AN 2");
 		try {
 			Assert.assertTrue(p.isVarAssign(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -932,6 +992,7 @@ public class ParserTest {
 		p.s = new Scanner("NUMBR");
 		System.out.println("---- 'testType' ----");
 		Assert.assertTrue(p.isType(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -942,6 +1003,7 @@ public class ParserTest {
 		p.s = new Scanner("var1 IS NOW A NUMBR");
 		try {
 			Assert.assertTrue(p.isVarDecl(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -955,6 +1017,7 @@ public class ParserTest {
 		System.out.println("---- 'testIdentifier1' ----");
 		p.s = new Scanner("var1");
 		Assert.assertTrue(p.isIdentifier(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -964,6 +1027,7 @@ public class ParserTest {
 		System.out.println("---- 'testIdentifier2' ----");
 		p.s = new Scanner("var_1");
 		Assert.assertTrue(p.isIdentifier(p.s.lookupToken()));
+		Assert.assertTrue(!p.isError());
 	}
 	
 	@Test
@@ -973,6 +1037,7 @@ public class ParserTest {
 		System.out.println("---- expecting error notice 'testNotIdentifier' ----");
 		p.s = new Scanner("1var");
 		Assert.assertFalse(p.isIdentifier(p.s.lookupToken()));
+//		Assert.assertTrue(p.isError());
 		System.out.println("-----------------------------------------");
 	}
 	
@@ -991,6 +1056,7 @@ public class ParserTest {
 				"IF YOU SAY SO");
 		try {
 			Assert.assertTrue(p.isFunction(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -1003,15 +1069,16 @@ public class ParserTest {
 		p.parseTest = true;
 		System.out.println("---- 'testFunction2' ----");
 		p.s = new Scanner("" +
-				"HOW DUZ I func_name YR arg1 AN YR arg2 AN YR arg3 " +
-				"    BOTH SAEM var1 AN var2 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var1 AN var2 " +
-				"    OIC " +
+				"HOW DUZ I func_name YR NUMBR arg1 AN YR CHARZ arg2 AN YR TROOF arg3 \n" +
+				"    BOTH SAEM var1 AN var2 \n" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var1 AN var2 \n" +
+				"    OIC \n" +
 				"IF YOU SAY SO");
 		try {
 			Assert.assertTrue(p.isFunction(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -1024,16 +1091,17 @@ public class ParserTest {
 		p.parseTest = true;
 		System.out.println("---- 'testFunction3' ----");
 		p.s = new Scanner("" +
-				"HOW DUZ I func_name YR arg1 AN YR arg2 AN YR arg3 " +
-				"    BOTH SAEM var1 AN var2 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var1 AN var2 " +
-				"    OIC " +
-				"FOUND YR var1 " +
+				"HOW DUZ I func_name YR arg1 AN YR arg2 AN YR arg3 \n" +
+				"    BOTH SAEM var1 AN var2 \n" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var1 AN var2 \n" +
+				"    OIC \n" +
+				"FOUND YR var1 \n" +
 				"IF YOU SAY SO");
 		try {
 			Assert.assertTrue(p.isFunction(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -1046,17 +1114,18 @@ public class ParserTest {
 		p.parseTest = true;
 		System.out.println("---- 'testFunction4' ----");
 		p.s = new Scanner("" +
-				"HOW DUZ I func_name YR arg1 AN YR arg2 AN YR arg3 " +
-				"    SUM OF var1 AN 20 " +
-				"    GTFO " +
-				"    BOTH SAEM var1 AN var2 " +
-				"    ORLY? " +
-				"        YA RLY " +
-				"            SUM OF var1 AN var2 " +
-				"    OIC " +
+				"HOW DUZ I func_name YR arg1 AN YR arg2 AN YR arg3 \n" +
+				"    SUM OF var1 AN 20 \n" +
+				"    GTFO \n" +
+				"    BOTH SAEM var1 AN var2 \n" +
+				"    ORLY? \n" +
+				"        YA RLY \n" +
+				"            SUM OF var1 AN var2 \n" +
+				"    OIC \n" +
 				"IF YOU SAY SO");
 		try {
 			Assert.assertTrue(p.isFunction(p.s.lookupToken()));
+			Assert.assertTrue(p.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
