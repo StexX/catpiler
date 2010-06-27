@@ -34,6 +34,7 @@ import catpiler.frontend.scanner.keywords.CHARZ;
 import catpiler.frontend.scanner.keywords.DIFF;
 import catpiler.frontend.scanner.keywords.DIFFRINT;
 import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.EITHER;
 import catpiler.frontend.scanner.keywords.FAIL;
 import catpiler.frontend.scanner.keywords.HAI;
@@ -668,6 +669,29 @@ public class ScannerTest {
 		Keyword t = null;
 		if((t = s.lookupToken()) != null) {
 			Assert.assertTrue(t instanceof OUTTA);
+		} else {
+			fail("No token found :(");
+		}
+	}
+	
+	@Test
+	public void tesDerefOp() {
+		Scanner s = new Scanner("id.var");
+		Keyword t = null;
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof Identifier);
+			Assert.assertEquals("id", t.getAttribute());
+		} else {
+			fail("No token found :(");
+		}
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof DerefOperator);
+		} else {
+			fail("No token found :(");
+		}
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof Identifier);
+			Assert.assertEquals("var", t.getAttribute());
 		} else {
 			fail("No token found :(");
 		}

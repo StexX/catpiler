@@ -1,6 +1,5 @@
 package catpiler.frontend.parser.symboltable;
 
-import java.util.ArrayList;
 
 public class SymboltableEntry {
 	
@@ -10,13 +9,20 @@ public class SymboltableEntry {
 	
 	private String attribute;
 	
+	private String heap;
+	
+	private int heapsize;
+	
 	private String type;
 
 	private String address;
 	
 	private String reg;
 	
-	private ArrayList<String> attributeArrayList;
+	private boolean needRefresh = false;
+	
+	private boolean needLoad = false;
+	
 	
 	public String getName() {
 		return name;
@@ -42,14 +48,6 @@ public class SymboltableEntry {
 		return type;
 	}
 	
-	public ArrayList<String> getAttributeArrayList() {
-		return attributeArrayList;
-	}
-
-	public void setAttributeArrayList(ArrayList<String> attributeArrayList) {
-		this.attributeArrayList = attributeArrayList;
-	}
-
 	public String getCategory() {
 		return category;
 	}
@@ -73,4 +71,37 @@ public class SymboltableEntry {
 	public void setReg(String reg) {
 		this.reg = reg;
 	}
+
+	public boolean isNeedRefresh() {
+		return needRefresh;
+	}
+
+	public void setNeedRefresh(boolean needRefresh) {
+		this.needRefresh = needRefresh;
+	}
+
+	public boolean isNeedLoad() {
+		return needLoad;
+	}
+
+	public void setNeedLoad(boolean needLoad) {
+		this.needLoad = needLoad;
+	}
+
+	public String getHeap() {
+		return heap;
+	}
+
+	public void setHeap(String heap) {
+		this.heap = heap;
+	}
+
+	public int getHeapsize() {
+		return heapsize;
+	}
+
+	public void setHeapsize(int heapsize) {
+		this.heapsize = heapsize;
+	}
+
 }

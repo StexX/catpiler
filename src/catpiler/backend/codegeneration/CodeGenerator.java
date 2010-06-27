@@ -1,57 +1,98 @@
 package catpiler.backend.codegeneration;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 
-import catpiler.frontend.parser.Parser;
+import catpiler.utils.ErrorReporter;
 
 public class CodeGenerator {
 
 	private static int CODESIZE = 100000;
+	//we do not allow more than 1000 lines of data declarations
+	private static int DATASIZE = 1000;
 	private File file;
-	private FileOutputStream fileOut;
+	private FileWriter fileWriter;
 	
+	private String data[] = new String[DATASIZE];
+	private int dc = 0;
 	private String code[] = new String[CODESIZE];
 	private int pc = 0;
 	
-	private Parser parser;
-	
 	// first 2 registers. r0 = 0, r1 = reserved
-	public int r[];
+	private int r[];
 	// v0: expression eval, v1: function results
-	public int v[];
+	private int v[];
 	// arguments
-	public int a[];
+	private int a[];
 	// callee saves
-	public int s[];
+	private int s[];
 	// temporary: caller saves
-	public int t[];
+	private int t[];
 	// pointer to global area
-	public int gp;
+	private int gp;
 	// frame pointer
-	public int fp;
+	private int fp;
 	// stack pointer
-	public int sp;
+	private int sp;
 	// return address
-	public int ra;
-	// next free register
-	public int nfr;
+	private int ra;
+	// register bitmap
+	public int bitmap[];
+	// next free temporary register
+	public int nft;
+	// next free argument register
+	private int nfa;
+	// next free value register
+	private int nfv;
 	
-	public CodeGenerator(Parser parser) {
-		file = new File("tmp.s");
-		try {
-			fileOut = new FileOutputStream(file);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+	public CodeGenerator(String outputName) {
+		if(outputName != null) {
+			file = new File(outputName);
+			try {
+				fileWriter = new FileWriter(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-		nfr = 0;
+		nft = 0;
+		nfa = 0;
+		nfv = 0;
+		fp = sp = 0;
 		t = new int[10];
-		this.parser = parser;
+		a = new int[4];
+		v = new int[2];
+		// the bitmap illustrates which registers can be used and which cannot be used
+		bitmap = new int[] { 
+				// r0:
+				1, 
+				// assembler temporary - reserved by assembler
+				1, 
+				// values v0 and v1
+				0, 0, 
+				// arguments
+				0, 0, 0, 0, 
+				// temporaries
+				0, 0, 0, 0, 0, 0, 0, 0, 
+				// saved values
+				0, 0, 0, 0, 0, 0, 0, 0,
+				// temporaries
+				0, 0,
+				// reserved for use by interrupt/trap handler
+				1, 1,
+				// global pointer
+				1,
+				// stack pointer
+				1,
+				// frame pointer
+				1,
+				// return address
+				1
+			};
 	}
 	
 	public void put(String op, String arg1, String arg2, String arg3) {
-		if(!parser.isError()) {
+		if(!ErrorReporter.isError()) {
 			String line = op + " " + arg1 + " " + arg2 + " " + arg3 + "\n";
 			
 			if(pc >= CODESIZE) {
@@ -64,7 +105,7 @@ public class CodeGenerator {
 	}
 	
 	public void put(String op, String arg1, String arg2) {
-		if(!parser.isError()) {
+		if(!ErrorReporter.isError()) {
 			String line = op + " " + arg1 + " " + arg2 + "\n";
 			
 			if(pc >= CODESIZE) {
@@ -77,7 +118,7 @@ public class CodeGenerator {
 	}
 	
 	public void put(String op, String arg1) {
-		if(!parser.isError()) {
+		if(!ErrorReporter.isError()) {
 			String line = op + " " + arg1 + "\n";
 			
 			if(pc >= CODESIZE) {
@@ -89,36 +130,257 @@ public class CodeGenerator {
 		}
 	}
 	
-	public String loadImmediately(int arg) {
-		if(!parser.isError()) {
-			if(nfr > t.length) {
-				// TODO: Push other register on the stack.
+	public void put(String op) {
+		if(!ErrorReporter.isError()) {
+			
+			if(pc >= CODESIZE) {
+				// TODO: ERROR HANDLING. THIS MUST NEVER HAPPEN!!!!!
 			}
-			t[nfr] = arg;
-			String reg = "$t" + nfr;
-			put("li", reg, new Integer(arg).toString());
-			nfr++;
+			code[pc] = op + "\n";
+			System.out.println("code[" + pc + "] = " + op + "\n");
+			pc++;
+		}
+	}
+	
+	public void storeData(String name, String type, String size) {
+		if(!ErrorReporter.isError()) {
+			
+			if(dc >= DATASIZE) {
+				// TODO: ERROR HANDLING. THIS MUST NEVER HAPPEN!!!!!
+			}
+			data[dc] = name + " " + type + " " + size + "\n";
+			System.out.println("data[" + dc + "] = " + name + " " + type + " " + size + "\n");
+			dc++;
+		}
+	}
+	
+	public void storeData(String line) {
+		if(!ErrorReporter.isError()) {
+			
+			if(dc >= DATASIZE) {
+				// TODO: ERROR HANDLING. THIS MUST NEVER HAPPEN!!!!!
+			}
+			data[dc] = line + "\n";
+			System.out.println("data[" + dc + "] = " + line + "\n");
+			dc++;
+		}
+	}
+	
+	public String loadImmediately(String arg) {
+		if(!ErrorReporter.isError()) {
+			if(nft >= t.length) {
+				cleanUpTemporaries();
+				if(nft >= t.length) {
+					// TODO: check whether there is enough 
+					// space. If not: push temps on stack
+				}
+			}
+//			t[nft] = arg;
+			String reg = "$t" + nft;
+			put("li", reg, arg);
+			nft++;
 			return reg;
 		}
 		return null;
 	}
 	
-	public String load(int address) {
-		if(!parser.isError()) {
-			if(nfr > t.length) {
+	public void releaseRegister(String reg) {
+		if(reg.startsWith("$t")) {
+			Integer reg_number = new Integer(reg.substring(2));
+			bitmap[reg_number] = 0;
+		}
+	}
+	
+	public String loadWord(String address) {
+		if(!ErrorReporter.isError()) {
+			if(nft >= t.length) {
+				cleanUpTemporaries();
+				if(nft >= t.length) {
+					// TODO: check whether there is enough 
+					// space. If not: push temps on stack
+				}
+			}
+			String reg = "$t" + nft;
+			String stackAddr = address + "($fp)";
+			put("lw", reg, stackAddr);
+			if(nft <= 15) {
+				bitmap[nft + 8] = 1;
+			} else {
+				if(nft == 16)
+					bitmap[24] = 1;
+				else
+					bitmap[25] = 1;
+			}
+			nft++;
+			return reg;
+		}
+		return null;
+	}
+	
+	public String loadByte(int address) {
+		if(!ErrorReporter.isError()) {
+			if(nft >= t.length) {
+				cleanUpTemporaries();
+				if(nft >= t.length) {
+					// TODO: check whether there is enough 
+					// space. If not: push temps on stack
+				}
+			}
+			t[nft] = address;
+			String reg = "$t" + nft;
+			String stackAddr = new Integer(address).toString() + "($fp)";
+			put("lb", reg, stackAddr);
+			if(nft <= 15) {
+				bitmap[nft + 8] = 1;
+			} else {
+				if(nft == 16)
+					bitmap[24] = 1;
+				else
+					bitmap[25] = 1;
+			}
+			nft++;
+			return reg;
+		}
+		return null;
+	}
+	
+	public String loadByte(String from_register) {
+		if(!ErrorReporter.isError()) {
+			if(nft >= t.length) {
+				cleanUpTemporaries();
+				if(nft >= t.length) {
+					// TODO: check whether there is enough 
+					// space. If not: push temps on stack
+				}
+			}
+//			t[nft] = address;
+			String target = "$t" + nft;
+//			String stackAddr = new Integer(address).toString() + "($fp)";
+//			put("lb", reg, stackAddr);
+			put("lb", target, from_register);
+			if(nft <= 15) {
+				bitmap[nft + 8] = 1;
+			} else {
+				if(nft == 16)
+					bitmap[24] = 1;
+				else
+					bitmap[25] = 1;
+			}
+			nft++;
+			return target;
+		}
+		return null;
+	}
+	
+	public int[] cleanUpTemporaries() {
+		int newTmp1[] = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
+		// index for newTmp1
+		int j = 0;
+		// $t0 - $t7:
+		for(int i=0; i<8; i++) {
+			if(bitmap[8+i] == 1) {
+				newTmp1[j] = 1;
+				// move tmp register
+				// maybe move tmp int array elements (if this array is needed anywhere)
+				j++;
+			}
+		}
+		// $t8:
+		if(bitmap[24] == 1 && j < newTmp1.length) {
+			newTmp1[j] = 1;
+			j++;
+			bitmap[24] = 0;
+		}
+		// $t9:
+		if(bitmap[25] == 1 && j < newTmp1.length) {
+			newTmp1[j] = 1;
+			j++;
+			bitmap[25] = 0;
+		}
+		
+		int freebitcount = 0;
+		for(int i=0; i<8; i++) {
+			if(newTmp1[i] == 1) {
+				bitmap[8+i] = 1;
+			} else {
+				freebitcount++;
+				bitmap[8+i] = 0;
+			}
+		}
+		nft = 8 - freebitcount;
+		if(bitmap[24] == 1) {
+			nft++;
+		}
+		if(bitmap[25] == 1) {
+			nft++;
+		}
+		
+		return bitmap;
+	}
+	
+	public String loadArgs(int address) {
+		if(!ErrorReporter.isError()) {
+			if(nfa >= a.length) {
 				// TODO: Push other register on the stack.
 			}
-			t[nfr] = address;
-			String reg = "$t" + nfr;
+			a[nfa] = address;
+			String reg = "$a" + nfa;
 			put("lw", reg, new Integer(address).toString());
-			nfr++;
+			bitmap[nfa + 4] = 1;
+			nfa++;
 			return reg;
+		}
+		return null;
+	}
+	
+	public String move2Args(String reg) {
+		if(!ErrorReporter.isError()) {
+			if(nfa >= a.length) {
+				// TODO: Push other register on the stack.
+			}
+			String args_reg = "$a" + nfa;
+			put("move", args_reg, reg);
+			nfa++;
+			return args_reg;
+		}
+		return null;
+	}
+	
+	public String moveFromArgs(String args_reg) {
+		if(!ErrorReporter.isError()) {
+			if(nft >= t.length) {
+				cleanUpTemporaries();
+				if(nft >= t.length) {
+					// TODO: check whether there is enough 
+					// space. If not: push temps on stack
+				}
+			}
+			String reg = "$t" + nft;
+			put("move", reg, args_reg);
+			nft++;
+			return reg;
+		}
+		return null;
+	}
+	
+	public String move2Return(String reg) {
+		if(reg.startsWith("$v")) {
+			return reg;
+		}
+		if(!ErrorReporter.isError()) {
+			if(nfv >= v.length) {
+				// TODO: Push other register on the stack.
+			}
+			String ret_reg = "$v" + nfv;
+			put("move", ret_reg, reg);
+			nfv++;
+			return ret_reg;
 		}
 		return null;
 	}
 	
 	public void pushOnStack(int size) {
-		String register = loadImmediately(0);
+		String register = loadImmediately("0");
 		// decrease stack pointer by 'size' bytes
 		put("subu", "$sp", "$sp", new Integer(size).toString());
 		// push loaded register onto stack
@@ -133,17 +395,67 @@ public class CodeGenerator {
 		return sp;
 	}
 	
-	public void setSp(int offset) {
+//	public void setSp(int sp) {
+//		this.sp = sp;
+//	}
+	
+	public void decreaseSp(int offset) {
 		String target = new Integer(offset).toString() + "($sp)";
 		put("subu", "$sp", target);
-		sp = sp + offset;
+		sp = sp - offset;
 	}
 	
+	public int getFp() {
+		return fp;
+	}
+
+	public String getNextFreeTemporary() {
+		if(nft >= t.length) {
+			cleanUpTemporaries();
+			if(nft >= t.length) {
+				// TODO: check whether there is enough 
+				// space. If not: push temps on stack
+			}
+		}
+		String nextTemp = "$t" + new Integer(nft).toString();
+		nft++;
+		return nextTemp;
+	}
+	
+	public void setFPisSP() {
+		put("add", "$fp", "$r0", "$sp");
+		this.fp = sp;
+	}
+	
+	public void setSPisFP() {
+		put("add", "$sp", "$r0", "$fp");
+		this.sp = fp;
+	}
+
 	public void fixUp(int pc, int offset) {
 		String line2fix = code[pc];
 		String msg = "fixed line " + "[" + pc + "] : " + line2fix + ": ";
 		code[pc] = line2fix.replace("offset", new Integer(offset).toString());
 		msg = msg + code[pc];
 		System.out.println(msg);
+	}
+	
+	public void finalizeCG() {
+		if(fileWriter != null) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("size: ");
+			sb.append(code.length);
+			sb.append("\n");
+			try {
+				fileWriter.write(sb.toString());
+				for(int i=0; i<code.length; i++) {
+					fileWriter.write(code[i]);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			// TODO: error
+		}
 	}
 }

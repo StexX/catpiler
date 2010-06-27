@@ -5,9 +5,11 @@ import static org.junit.Assert.fail;
 import org.junit.Assert;
 import org.junit.Test;
 
+import catpiler.backend.codegeneration.CodeGenerator;
 import catpiler.frontend.exception.ParseException;
 import catpiler.frontend.parser.Parser;
 import catpiler.frontend.scanner.Scanner;
+import catpiler.utils.ErrorReporter;
 
 public class CodeGeneratorTest {
 
@@ -719,6 +721,7 @@ public class CodeGeneratorTest {
 				"I HAS A var2\n" +
 				"IM IN YR loop TIL BOTH OF var1 AN WIN \n" +
 				"    var2 R SUM OF 1 AN var2 \n" +
+				"    var1 R WIN\n" +
 				"IM OUTTA YR loop \n" +
 				"KTHXBYE");
 		try {
@@ -734,17 +737,228 @@ public class CodeGeneratorTest {
 	}
 	
 	@Test
-	public void testNumOpFail() {
+	public void testFunction1() {
 		Parser p = new Parser();
 		p.parseTest = true;
-		System.out.println("---- 'testNumOpFail' ----");
-		p.s = new Scanner("SUM OF QUOSHUNT OF 40 AN 0 AN 30");
+		System.out.println("---- 'testFunction1' ----");
+		p.s = new Scanner("" +
+				"HAI\n" +
+				"I HAS A var1\n" +
+				"I HAS A var2\n" +
+				"IM IN YR loop TIL BOTH OF var1 AN WIN \n" +
+				"    var2 R SUM OF 1 AN var2 \n" +
+				"    var1 R WIN\n" +
+				"IM OUTTA YR loop \n" +
+				"KTHXBYE\n" +
+				"\n" +
+				"HOW DUZ I addArguments YR NUMBR arg1 AN YR NUMBR arg2\n" +
+				"    FOUND YR SUM OF arg1 AN arg2 \n" +
+				"IF YOU SAY SO");
 		try {
-			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
-			Assert.assertTrue(p.isError());
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertNotNull(p.currentSymboltableEntry);
+			System.out.println("CurrentSymbolTableEntry: " + 
+					p.currentSymboltableEntry.getName() + " : " + 
+					p.currentSymboltableEntry.getAttribute());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
 		}
+	}
+	
+	@Test
+	public void testFunction2() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testFunction2' ----");
+		p.s = new Scanner("" +
+				"HAI\n" +
+				"I HAS A var1\n" +
+				"I HAS A var2\n" +
+				"I HAS A var3\n" +
+				"IM IN YR loop TIL BOTH OF var1 AN WIN \n" +
+				"    var2 R SUM OF 1 AN var2 \n" +
+				"    var1 R WIN\n" +
+				"IM OUTTA YR loop \n" +
+				"CALL addArguments var2 var3\n" +
+				"KTHXBYE\n" +
+				"\n" +
+				"HOW DUZ I addArguments YR NUMBR arg1 AN YR NUMBR arg2\n" +
+				"    FOUND YR SUM OF arg1 AN arg2 \n" +
+				"IF YOU SAY SO");
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertNotNull(p.currentSymboltableEntry);
+			System.out.println("CurrentSymbolTableEntry: " + 
+					p.currentSymboltableEntry.getName() + " : " + 
+					p.currentSymboltableEntry.getAttribute());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testPrint1() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testPrint1' ----");
+		Scanner s = new Scanner("VISIBLE \"test bla tralala\"");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isPrint(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testPrint2() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testPrint2' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A var1\n" +
+				"    I HAS A var2\n" +
+				"    I HAS A var3\n" +
+				"    DIFFRINT var1 AN var2\n" +
+				"    ORLY?\n" +
+				"    YA RLY\n" +
+				"        var3 R 2" +
+				"    NO WAI\n" +
+				"        var3 R 5\n" +
+				"    VISIBLE var3\n" +
+				"    OIC\n" +
+				"KTHXBYE");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testPrint3() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testPrint3' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A var1\n" +
+				"    var1 IS NOW A CHARZ 5\n" +
+				"    var1 R \"abcde\"" +
+				"    I HAS A var2\n" +
+				"    var2 IS NOW A CHARZ 5\n" +
+				"    I HAS A var3\n" +
+				"    DIFFRINT var1 AN var2\n" +
+				"    ORLY?\n" +
+				"    YA RLY\n" +
+				"        var3 R 2" +
+				"    NO WAI\n" +
+				"        var3 R 5\n" +
+				"    VISIBLE var3\n" +
+				"    OIC\n" +
+				"KTHXBYE");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testNumOpFail() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testNumOpFail' ----");
+		Scanner s = new Scanner("SUM OF QUOSHUNT OF 40 AN 0 AN 30");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isNumOp(p.s.lookupToken()));
+			Assert.assertTrue(ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testCleanUpTemporaries() {
+		CodeGenerator codeGenerator = new CodeGenerator(null);
+		codeGenerator.bitmap = new int[] { 
+				// r0:
+				1, 
+				// assembler temporary - reserved by assembler
+				1, 
+				// values v0 and v1
+				0, 0, 
+				// arguments
+				0, 0, 0, 0, 
+				// temporaries
+				0, 0, 0, 1, 1, 0, 1, 0, 
+				// saved values
+				0, 0, 0, 0, 0, 0, 0, 0,
+				// temporaries
+				0, 1,
+				// reserved for use by interrupt/trap handler
+				1, 1,
+				// global pointer
+				1,
+				// stack pointer
+				1,
+				// frame pointer
+				1,
+				// return address
+				1
+			};
+		codeGenerator.cleanUpTemporaries();
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[0]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		Assert.assertEquals(1, codeGenerator.bitmap[1]);
+		
+		Assert.assertEquals(4, codeGenerator.nft);
+//		for(int i=0; i<32; i++) {
+//			System.out.print(codeGenerator.bitmap[i] + " ");
+//		}
 	}
 }

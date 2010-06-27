@@ -1,0 +1,8 @@
+CAN HAS strlib
+HAI
+    I HAS A helloWorldStr
+    helloWorldStr IS NOW A CHARZ
+    helloWorldStr R "Hello World"
+    CALL printString helloWorldStr
+KTHXBYE
+

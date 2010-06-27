@@ -30,6 +30,7 @@ import catpiler.frontend.scanner.keywords.ANY;
 import catpiler.frontend.scanner.keywords.BIGGR;
 import catpiler.frontend.scanner.keywords.BOTH;
 import catpiler.frontend.scanner.keywords.BTW;
+import catpiler.frontend.scanner.keywords.CALL;
 import catpiler.frontend.scanner.keywords.CAN;
 import catpiler.frontend.scanner.keywords.CHAR;
 import catpiler.frontend.scanner.keywords.CHARZ;
@@ -37,6 +38,7 @@ import catpiler.frontend.scanner.keywords.DIFF;
 import catpiler.frontend.scanner.keywords.DIFFRINT;
 import catpiler.frontend.scanner.keywords.DOWANT;
 import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.EITHER;
 import catpiler.frontend.scanner.keywords.FAIL;
 import catpiler.frontend.scanner.keywords.FOUND;
@@ -80,6 +82,7 @@ import catpiler.frontend.scanner.keywords.TIL;
 import catpiler.frontend.scanner.keywords.TLDR;
 import catpiler.frontend.scanner.keywords.TROOF;
 import catpiler.frontend.scanner.keywords.TROOFZ;
+import catpiler.frontend.scanner.keywords.VISIBLE;
 import catpiler.frontend.scanner.keywords.WAI;
 import catpiler.frontend.scanner.keywords.WILE;
 import catpiler.frontend.scanner.keywords.WIN;
@@ -192,11 +195,14 @@ public class TokenService {
 		mapOfPotentialTokens.put(WILE.tokenId,WILE.class);
 		mapOfPotentialTokens.put(TIL.tokenId,TIL.class);
 		mapOfPotentialTokens.put(IS.tokenId,IS.class);
+		mapOfPotentialTokens.put(VISIBLE.tokenId,VISIBLE.class);
+		mapOfPotentialTokens.put(CALL.tokenId,CALL.class);
+		mapOfPotentialTokens.put(DerefOperator.tokenId,DerefOperator.class);
 		
 		potToken_count = mapOfPotentialTokens.size();
 	}
 	
-	public Keyword returnFirstMatchinToken(char token[], int pos) throws EOFException, NoTokenFoundException, InstantiationException, IllegalAccessException {
+	public Keyword returnFirstMatchinToken(char token[], int pos) throws EOFException, InstantiationException, IllegalAccessException {
 		if(token[0] == '\0') {
 			throw new EOFException();
 		} else if (token[0] == '\"') {
@@ -211,6 +217,8 @@ public class TokenService {
 			// searching for a keyword
 			String t = it.next();
 			if(t != null) {
+				// checks whether searching-token has same length as keyword
+				// of if the tokencharacter at position pos is equal to the keyword character
 				if((token[pos] == '\0' && pos == t.length())
 						|| (pos < t.length() && token[pos] == t.charAt(pos))) {
 					// found a matching keyword.

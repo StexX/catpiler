@@ -23,12 +23,14 @@ import org.junit.Assert;
 import catpiler.frontend.exception.NoTokenFoundException;
 import catpiler.frontend.exception.SyntaxException;
 import catpiler.frontend.scanner.keywords.BTW;
+import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.Identifier;
 import catpiler.frontend.scanner.keywords.Int;
 import catpiler.frontend.scanner.keywords.Keyword;
 import catpiler.frontend.scanner.keywords.OBTW;
 import catpiler.frontend.scanner.keywords.R;
 import catpiler.frontend.scanner.keywords.TLDR;
+import catpiler.utils.ErrorReporter;
 
 /**
  * The CATpiler Scanner searches for Tokens in a given source
@@ -72,6 +74,7 @@ public class Scanner {
 	 * @param input
 	 */
 	public Scanner(String input) {
+		ErrorReporter.setS(this);
 		source = input.toCharArray();
 		src_pointer = 0;
 		pointerBeforeToken = 0;
@@ -113,13 +116,14 @@ public class Scanner {
 				token_pointer++;
 				current_token[token_pointer] = '\0';
 			} else {
-				readNextChar();
+				if(!(t instanceof DerefOperator))
+					readNextChar();
 			}
 			
 			while(t != null &&
 					!(current_token[token_pointer] == '\0' && token_pointer == t.getTokenID().length()) &&
 					!((t instanceof catpiler.frontend.scanner.keywords.String) 
-						|| (t instanceof Int))) {
+						|| (t instanceof Int) || (t instanceof DerefOperator))) {
 				// if the next char is a whitespace, finalize current_token
 				// and loop up token that exactly matches the current_token 
 				// char array
@@ -143,9 +147,6 @@ public class Scanner {
 		} catch (EOFException e) {
 			// reached end of file -> no token found
 			return t;
-		} catch (NoTokenFoundException e) {
-			// nothing found?! Could be an id...
-			t = new Identifier();
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 			return null;
@@ -170,7 +171,7 @@ public class Scanner {
 				//fail
 				fail = true;
 			}
-			while(!(readWhiteSpace() || readEOS())) {
+			while(!(readWhiteSpace() || readEOS() || readDerefOp())) {
 				readNextChar();
 				if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
 						current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
@@ -184,7 +185,7 @@ public class Scanner {
 //			current_token[token_pointer] = '\0';
 			String current_token_str = new String(current_token).substring(0, token_pointer);
 			if(fail) {
-				System.out.println("Syntax error on identifier " + current_token_str);
+				ErrorReporter.markError("Syntax error on identifier " + current_token_str);
 				return null;
 			}
 			
@@ -208,7 +209,7 @@ public class Scanner {
 				token_pointer++;
 //				current_token[token_pointer] = '\0';
 				if(fail) {
-					System.out.println("Syntax error on number " + new String(current_token));
+					ErrorReporter.markError("Syntax error on number " + new String(current_token));
 					return null;
 				}
 			}
@@ -220,14 +221,14 @@ public class Scanner {
 				readNextChar();
 				if(current_token[token_pointer] == '\0') {
 					fail = true;
-					System.out.println("Syntax error on string " + new String(current_token) + 
+					ErrorReporter.markError("Syntax error on string " + new String(current_token) + 
 							". Expected \".");
 					return null;
 				}
 			}
 			token_pointer++;
 //			current_token[token_pointer] = '\0';
-			String current_token_str = new String(current_token).substring(0, token_pointer);
+			String current_token_str = new String(current_token).substring(1, token_pointer-1);
 			t.setAttribute(current_token_str);
 		} else if(t instanceof BTW) {
 			// skip until next LF '\n'
@@ -252,6 +253,18 @@ public class Scanner {
 			if(source[src_pointer] == '\n')
 				lineCount++;
 			src_pointer++;
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * returns true if it read the dereference character, false otherwise
+	 * @return
+	 */
+	private boolean readDerefOp() {
+		if(src_pointer < source.length && source[src_pointer] != '\0' 
+			&& (source[src_pointer] == '.')) {
 			return true;
 		}
 		return false;
