@@ -2,10 +2,14 @@ package catpiler.frontend.test;
 
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import catpiler.backend.codegeneration.CodeGenerator;
+import catpiler.backend.linker.Linker;
 import catpiler.frontend.exception.ParseException;
 import catpiler.frontend.parser.Parser;
 import catpiler.frontend.scanner.Scanner;
@@ -687,6 +691,42 @@ public class CodeGeneratorTest {
 	}
 	
 	@Test
+	public void testIf9() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testIf9' ----");
+		p.s = new Scanner("HAI \n" +
+				"I HAS A var1 \n" +
+				"I HAS A var2 \n" +
+				"I HAS A var3 \n" +
+				"I HAS A var4 \n" +
+				"I HAS A var5 \n" +
+				"var5 R 4\n" +
+				"BOTH OF var1 AN var2\n" +
+				"ORLY? \n" +
+				"YA RLY\n" +
+				"    var5 R SUM OF var3 AN 3\n" +
+				"MEBBE var2\n" +
+				"    SUM OF var3 AN var4\n" +
+				"MEBBE var1\n" +
+				"    var5 R SUM OF 1 AN var4\n" +
+				"NO WAI\n" +
+				"    PRODUKT OF var3 AN var4\n" +
+				"OIC\n" +
+				"KTHXBYE");
+		try {
+			Assert.assertTrue(p.isMain(p.s.lookupToken()));
+			Assert.assertNotNull(p.currentSymboltableEntry);
+			System.out.println("CurrentSymbolTableEntry: " + 
+					p.currentSymboltableEntry.getName() + " : " + 
+					p.currentSymboltableEntry.getAttribute());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
 	public void testLoop1() {
 		Parser p = new Parser();
 		p.parseTest = true;
@@ -780,11 +820,43 @@ public class CodeGeneratorTest {
 				"    var2 R SUM OF 1 AN var2 \n" +
 				"    var1 R WIN\n" +
 				"IM OUTTA YR loop \n" +
-				"CALL addArguments var2 var3\n" +
+				"CAN U addArguments var2 var3 ?\n" +
 				"KTHXBYE\n" +
 				"\n" +
 				"HOW DUZ I addArguments YR NUMBR arg1 AN YR NUMBR arg2\n" +
 				"    FOUND YR SUM OF arg1 AN arg2 \n" +
+				"IF YOU SAY SO");
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertNotNull(p.currentSymboltableEntry);
+			System.out.println("CurrentSymbolTableEntry: " + 
+					p.currentSymboltableEntry.getName() + " : " + 
+					p.currentSymboltableEntry.getAttribute());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testFunctionSmall() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testFunctionSmall' ----");
+		p.s = new Scanner("" +
+				"HAI\n" +
+				"I HAS A var1\n" +
+				"var1 R 3\n" +
+				"CAN U func var1 ?\n" +
+				"KTHXBYE\n" +
+				"\n" +
+				"HOW DUZ I func YR NUMBR arg1\n" +
+				"    I HAS A count\n" +
+				"    count R 0\n" +
+				"    IM IN YR printNtimes TIL BOTH SAEM count AN arg1\n" +
+				"        count R SUM OF count AN 1\n" +
+				"        VISIBLE count \n" +
+				"    IM OUTTA YR printNtimes\n" +
 				"IF YOU SAY SO");
 		try {
 			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
@@ -863,9 +935,256 @@ public class CodeGeneratorTest {
 				"        var3 R 2" +
 				"    NO WAI\n" +
 				"        var3 R 5\n" +
-				"    VISIBLE var3\n" +
+				"        VISIBLE var3\n" +
 				"    OIC\n" +
 				"KTHXBYE");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testGetline() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testGetline' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A var1\n" +
+				"    var1 IS NOW A CHARZ 5\n" +
+				"    GIMMEH var1\n" +
+				"    BOTH SAEM var1 AN \"test\"\n" +
+				"    ORLY?\n" +
+				"        YA RLY\n" +
+				"            VISIBLE \"you typed test\"\n" +
+				"        NO WAI\n" +
+				"            VISIBLE \"you didn't type test\"\n" +
+				"    OIC\n" +
+				"    VISIBLE var1\n" +
+				"KTHXBYE");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testVarLoading() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testVarLoading' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A fn1\n" +
+				"    I HAS A fn2\n" +
+				"    fn1 IS NOW A NUMBR\n" +
+				"    fn2 IS NOW A NUMBR\n" +
+				"    fn1 R 0\n" +
+				"    fn2 R 1\n" +
+				"    IM IN YR testVarLoading TIL BOTH SAEM fn1 AN fn2\n" +
+				"        I HAS A fn3\n" +
+				"        fn3 R SUM OF fn1 AN fn2\n" +
+				"        fn1 R fn2\n" +
+				"        fn2 R fn3\n" +
+				"    IM OUTTA YR testVarLoading\n" +
+				"KTHXBYE");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testFibonacci() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testFibonacci' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A arg\n" +
+				"    arg IS NOW A NUMBR\n" +
+				"    GIMMEH arg\n" +
+				"    VISIBLE \"calculating \"\n" +
+				"        VISIBLE arg\n" +
+				"        VISIBLE \". fibonacci number: \"\n" +
+				"    CAN U fibonacci arg ?\n" +
+				"KTHXBYE\n" +
+				"HOW DUZ I fibonacci YR NUMBR arg\n" +
+				"    I HAS A count\n" +
+				"    I HAS A fn1\n" +
+				"    I HAS A fn2\n" +
+				"    count IS NOW A NUMBR\n" +
+				"    fn1 IS NOW A NUMBR\n" +
+				"    fn2 IS NOW A NUMBR\n" +
+				"    fn1 R 0\n" +
+				"    fn2 R 1\n" +
+				"    count R 0\n" +
+//				"    VISIBLE \" \"" +
+//				"    VISIBLE fn1" +
+				"    VISIBLE \" \"" +
+				"    VISIBLE fn2" +
+				"    IM IN YR calulateFib TIL BOTH SAEM count AN arg\n" +
+				"        count R SUM OF count AN 1\n" +
+				"        I HAS A fn3\n" +
+				"        fn3 R SUM OF fn1 AN fn2\n" +
+				"        fn1 R fn2\n" +
+				"        fn2 R fn3\n" +
+//				"        VISIBLE \" \"" +
+				"        VISIBLE fn3\n" +
+				"    IM OUTTA YR calulateFib\n" +
+				"IF YOU SAY SO");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testFibonacciFile() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/testcode.lol");
+//		try {
+//			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+//		} catch (ParseException e) {
+//			e.printStackTrace();
+//		}
+	}
+	
+	@Test
+	public void testFunctionReturnValueFile() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/testReturnValue.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testFunctionReturnValueFile2() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/testReturnValue2.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testRecFunction1() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/recursiveFunctionTest.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testRecFunction2() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/recFaculty.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testStruct1() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/stuffTest.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testStruct2() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/stuffTest2.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testStruct3() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/stuffTest3.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+
+	@Test
+	public void testEvaluation1() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/evaluation1.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+
+	@Test
+	public void testEvaluation2() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/evaluation2.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+	
+	@Test
+	public void testEvaluation3() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/evaluation3.lol");
+			Assert.assertTrue(!ErrorReporter.isError());
+	}
+
+	@Test
+	public void testModules1() {
+		Parser p = new Parser();
+		Parser.loadSourcecode("src/catpiler/frontend/test/codeExamples/helloWorld.lol");
+		Assert.assertTrue(!ErrorReporter.isError());
+		Set<String> sources = new HashSet<String>();
+		sources.add("src/catpiler/frontend/test/codeExamples/helloWorld.cat");
+		sources.add("src/catpiler/frontend/test/codeExamples/strlib.cat");
+		Linker.destination = "/home/sstroka/Desktop/main.asm";
+		Linker.linkSources(sources);
+	}
+	
+	@Test
+	public void testFibonacci2() {
+		Parser p = new Parser();
+		p.parseTest = true;
+		System.out.println("---- 'testFibonacci2' ----");
+		Scanner s = new Scanner("" +
+				"HAI\n" +
+				"    I HAS A arg\n" +
+				"    arg IS NOW A NUMBR\n" +
+				"    GIMMEH arg\n" +
+				"    VISIBLE \"calculating \"\n" +
+				"        VISIBLE arg\n" +
+				"        VISIBLE \". fibonacci number: \"\n" +
+				"    I HAS A count\n" +
+				"    I HAS A fn1\n" +
+				"    I HAS A fn2\n" +
+				"    count IS NOW A NUMBR\n" +
+				"    fn1 IS NOW A NUMBR\n" +
+				"    fn2 IS NOW A NUMBR\n" +
+				"    fn1 R 0\n" +
+				"    fn2 R 1\n" +
+				"    count R 0\n" +
+//				"    VISIBLE \" \"" +
+//				"    VISIBLE fn1" +
+				"    VISIBLE \" \"" +
+				"    VISIBLE fn2" +
+				"    IM IN YR calulateFib TIL BOTH SAEM count AN arg\n" +
+				"        count R SUM OF count AN 1\n" +
+				"        I HAS A fn3\n" +
+				"        fn3 R SUM OF fn1 AN fn2\n" +
+				"        fn1 R fn2\n" +
+				"        fn2 R fn3\n" +
+				"        VISIBLE fn3\n" +
+				"    IM OUTTA YR calulateFib\n" +
+				"KTHXBYE\n");
 		p.s = s;
 		ErrorReporter.setS(s);
 		try {

@@ -27,10 +27,12 @@ import catpiler.frontend.scanner.keywords.A;
 import catpiler.frontend.scanner.keywords.ALL;
 import catpiler.frontend.scanner.keywords.AN;
 import catpiler.frontend.scanner.keywords.ANY;
+import catpiler.frontend.scanner.keywords.ArrayAccessOp;
 import catpiler.frontend.scanner.keywords.BIGGR;
 import catpiler.frontend.scanner.keywords.BOTH;
 import catpiler.frontend.scanner.keywords.BTW;
-import catpiler.frontend.scanner.keywords.CALL;
+import catpiler.frontend.scanner.keywords.QuestionMark;
+import catpiler.frontend.scanner.keywords.U;
 import catpiler.frontend.scanner.keywords.CAN;
 import catpiler.frontend.scanner.keywords.CHAR;
 import catpiler.frontend.scanner.keywords.CHARZ;
@@ -42,6 +44,7 @@ import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.EITHER;
 import catpiler.frontend.scanner.keywords.FAIL;
 import catpiler.frontend.scanner.keywords.FOUND;
+import catpiler.frontend.scanner.keywords.GIMMEH;
 import catpiler.frontend.scanner.keywords.GTFO;
 import catpiler.frontend.scanner.keywords.HAI;
 import catpiler.frontend.scanner.keywords.HAS;
@@ -196,8 +199,11 @@ public class TokenService {
 		mapOfPotentialTokens.put(TIL.tokenId,TIL.class);
 		mapOfPotentialTokens.put(IS.tokenId,IS.class);
 		mapOfPotentialTokens.put(VISIBLE.tokenId,VISIBLE.class);
-		mapOfPotentialTokens.put(CALL.tokenId,CALL.class);
+		mapOfPotentialTokens.put(U.tokenId,U.class);
 		mapOfPotentialTokens.put(DerefOperator.tokenId,DerefOperator.class);
+		mapOfPotentialTokens.put(ArrayAccessOp.tokenId,ArrayAccessOp.class);
+		mapOfPotentialTokens.put(GIMMEH.tokenId,GIMMEH.class);
+		mapOfPotentialTokens.put(QuestionMark.tokenId,QuestionMark.class);
 		
 		potToken_count = mapOfPotentialTokens.size();
 	}

@@ -60,6 +60,8 @@ public class Symboltable {
 	
 	private String name;
 	
+	private int level;
+	
 	/**
 	 * The constructor for the Symboltable
 	 * @param name
@@ -85,11 +87,12 @@ public class Symboltable {
 	 * @throws TypeCheckingException
 	 */
 	public void put(SymboltableEntry id) {
-		System.out.println(
-				"Put " + id.getName() + 
-				" : " + id.getAttribute() + 
-				" into symbolTable");
+//		System.out.println(
+//				"Put " + id.getName() + 
+//				" : " + id.getAttribute() + 
+//				" into symbolTable");
 		hashEntry.put(id.getName(), id);
+		id.setLevel(level);
 	}
 	
 	/**
@@ -99,9 +102,9 @@ public class Symboltable {
 	 * @throws TypeCheckingException
 	 */
 	public void put(TypeItem id) {
-		System.out.println(
-				"Put type " + id.getName() + 
-				" into symbolTable");
+//		System.out.println(
+//				"Put type " + id.getName() + 
+//				" into symbolTable");
 		types.put(id.getName(), id);
 	}
 
@@ -164,6 +167,11 @@ public class Symboltable {
 		Set<String> registers = new HashSet<String>();
 		for(String s : hashEntry.keySet()) {
 			if(hashEntry.get(s).getCategory().equals("reg")) {
+//				if(hashEntry.get(s).getReg() == null)
+//					System.err.println("Hashentry: " + s + " is null");
+//				else {
+//					System.err.println("Deleting registers for: " + s );
+//				}
 				registers.add(hashEntry.get(s).getReg());
 			}
 		}
@@ -243,5 +251,15 @@ public class Symboltable {
 	public HashMap<String, SymboltableEntry> getHashEntry() {
 		return hashEntry;
 	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+	
+	
 	
 }

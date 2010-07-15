@@ -1,6 +1,6 @@
 #1279222504000
-#printString CHARZ,
 #
+#printString CHARZ,
 .data
 hp0: .space 4
 hp1: .space 4
@@ -95,59 +95,12 @@ syscall
 la $t0 hp14
 sw $v0 ($t0)
 #end_mm
-main: 
+printString: 
 add $fp $zero $sp
-subu $sp $sp 4
-lw $t0 0($fp)
-la $t0 hp0
-lw $t0 ($t0)
-la $t1 hp0
-lw $t1 ($t1)
-la $t2 hp0
-lw $t2 ($t2)
-addi $t3 $zero 72
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 101
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 111
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 32
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 87
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 111
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 114
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 100
-sb $t3 ($t2)
-addi $t2 $t2 1
-sb $zero ($t2)
-la $t4 hp0
-move $a0 $t4
-move $s0 $t1
-move $s7 $ra
-move $s6 $fp
-jal printString
-move $fp $s6
-move $ra $s7
-move $t1 $s0
-add $sp $zero $fp
-addi $v0 $zero 10
+move $t0 $a0
+addi $v0 $zero 4
+move $a0 $t0
+lw $a0 ($a0)
 syscall
+add $sp $zero $fp
+jr $ra

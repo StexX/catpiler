@@ -44,7 +44,7 @@ public class TypeConversion {
 					reg = ste.getReg();
 				}
 				// set register if 0 < reg
-				codeGenerator.put("SLT", reg, "$r0", reg);
+				codeGenerator.put("slt", reg, "$zero", reg);
 			}
 			ste.setType(TROOF.tokenId);
 		}
@@ -74,10 +74,10 @@ public class TypeConversion {
 				} else {
 					reg = ste.getReg();
 					String tmp = codeGenerator.getNextFreeTemporary();
-					codeGenerator.put("ADDI", tmp, "$r0", "24");
+					codeGenerator.put("addi", tmp, "$zero", "24");
 					// extract last 8 bit:
-					codeGenerator.put("SLL", reg, tmp);
-					codeGenerator.put("SRL", reg, tmp);
+					codeGenerator.put("sll", reg, tmp);
+					codeGenerator.put("srl", reg, tmp);
 				}
 			}
 			ste.setType(TROOF.tokenId);
@@ -185,7 +185,7 @@ public class TypeConversion {
 				if(ste.getCategory().equals("var")) {
 					reg = codeGenerator.loadWord(ste.getAddress());
 					ste.setCategory("reg");
-					ste.setReg("reg");
+					ste.setReg(reg);
 				} else {
 					reg = ste.getReg();
 				}
@@ -235,7 +235,7 @@ public class TypeConversion {
 				if(ste.getCategory().equals("var")) {
 					reg = codeGenerator.loadWord(ste.getAddress());
 					ste.setCategory("reg");
-					ste.setReg("reg");
+					ste.setReg(reg);
 				} else {
 					reg = ste.getReg();
 				}
@@ -254,6 +254,7 @@ public class TypeConversion {
 				
 				// loads address of global variable hpx into register
 				codeGenerator.put("la", reg, ste.getHeap());
+				codeGenerator.put("lw", reg, "("+reg+")");
 				// storing?!
 			}
 		}
@@ -281,7 +282,7 @@ public class TypeConversion {
 				if(ste.getCategory().equals("var")) {
 					reg = codeGenerator.loadWord(ste.getAddress());
 					ste.setCategory("reg");
-					ste.setReg("reg");
+					ste.setReg(reg);
 				} else {
 					reg = ste.getReg();
 				}
@@ -330,7 +331,7 @@ public class TypeConversion {
 				if(ste.getCategory().equals("var")) {
 					reg = codeGenerator.loadWord(ste.getAddress());
 					ste.setCategory("reg");
-					ste.setReg("reg");
+					ste.setReg(reg);
 				} else {
 					reg = ste.getReg();
 				}

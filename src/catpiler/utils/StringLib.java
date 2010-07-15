@@ -21,7 +21,7 @@ public class StringLib {
 	 * @param string
 	 */
 	public static void storeString(SymboltableEntry string) {
-		if(string.getCategory().equals("const")) {
+//		if(string.getCategory().equals("const")) {
 			int size = string.getAttribute().length();
 			if(string.getHeap() == null) {
 				int heap = memoryManager.allocateMemory(size+1);
@@ -33,21 +33,25 @@ public class StringLib {
 					blocks = (int) (size / memoryManager.BLOCKSIZE) + 1;
 				}
 				string.setHeapsize(blocks);
+				string.setCategory("heap");
 			}
-			if(string.isNeedRefresh()) {
+//			if(string.isNeedRefresh()) {
 				String tmpAddress = codeGenerator.getNextFreeTemporary();
 				codeGenerator.put("la", tmpAddress, string.getHeap());
+				codeGenerator.put("lw", tmpAddress, "("+tmpAddress+")");
 				String tmpChar = codeGenerator.getNextFreeTemporary();
 				for(int i=0; i<size; i++) {
 					int c = string.getAttribute().charAt(i);
-					codeGenerator.put("addi", tmpChar, "$r0", new Integer(c).toString());
-					codeGenerator.put("sb", tmpAddress, tmpChar);
+					codeGenerator.put("addi", tmpChar, "$zero", new Integer(c).toString());
+					codeGenerator.put("sb", tmpChar, "("+tmpAddress+")");
 					codeGenerator.put("addi", tmpAddress, tmpAddress, "1");
 				}
-				codeGenerator.put("sb", tmpAddress, "$r0");
-				string.setNeedRefresh(false);
-			}
-		}
+				codeGenerator.put("sb", "$zero", "("+tmpAddress+")");
+				codeGenerator.releaseRegister(tmpAddress);
+				codeGenerator.releaseRegister(tmpChar);
+//				string.setNeedRefresh(false);
+//			}
+//		}
 	}
 	
 	public static void strCmp(SymboltableEntry string1, SymboltableEntry string2) {
@@ -56,29 +60,39 @@ public class StringLib {
 			ErrorReporter.markError("String comparison needs two strings as arguments");
 		}
 		
-		codeGenerator.put("strcmp_:");
-		String reg_str1 = codeGenerator.moveFromArgs(string1.getReg());
-		string1.setReg(reg_str1);
-		String reg_str2 = codeGenerator.moveFromArgs(string2.getReg());
-		string2.setReg(reg_str2);
-		String oneByteStr1 = codeGenerator.loadByte(reg_str1);
-		String oneByteStr2 = codeGenerator.loadByte(reg_str2);
-		codeGenerator.put("begz", oneByteStr1, "9");
-		codeGenerator.put("begz", oneByteStr2, "10");
+//		codeGenerator.put("strcmp_:");
+//		String reg_str1 = codeGenerator.moveFromArgs(string1.getReg());
+//		string1.setReg(reg_str1);
+//		String reg_str2 = codeGenerator.moveFromArgs(string2.getReg());
+//		string2.setReg(reg_str2);
+		codeGenerator.put("strcmploop_:");
+		String oneByteStr1 = codeGenerator.loadByte(string1.getReg());
+		String oneByteStr2 = codeGenerator.loadByte(string2.getReg());
+		// getbranchlabel
+		String bl1 = codeGenerator.getBranchLabel();
+		String bl2 = codeGenerator.getBranchLabel();
+		String bl3 = codeGenerator.getBranchLabel();
+		String bl4 = codeGenerator.getBranchLabel();
+		codeGenerator.put("beq", oneByteStr1, "$zero", bl1);
+		codeGenerator.put("beq", oneByteStr2, "$zero", bl2);
 		String tmp = codeGenerator.getNextFreeTemporary();
 		codeGenerator.put("slt", tmp, oneByteStr1, oneByteStr2);
-		codeGenerator.put("bnez", tmp, "8");
+		codeGenerator.put("bnez", tmp, bl2);
 		codeGenerator.put("slt", tmp, oneByteStr2, oneByteStr1);
-		codeGenerator.put("bnez", tmp, "6");
-		codeGenerator.put("addi", oneByteStr1, oneByteStr1, "1");
-		codeGenerator.put("addi", oneByteStr2, oneByteStr2, "1");
-		codeGenerator.put("j", "-10");
-		codeGenerator.put("begz", oneByteStr2, "4");
-		codeGenerator.put("jr", "$ra");
-		codeGenerator.put("addi", "$v0", "$r0", "1");
-		codeGenerator.put("jr", "$ra");
-		codeGenerator.put("addi", "$v0", "$r0", "0");
-		codeGenerator.put("jr", "$ra");
+		codeGenerator.put("bne", tmp, "$zero", bl2);
+		codeGenerator.put("addi", string1.getReg(), string1.getReg(), "1");
+		codeGenerator.put("addi", string2.getReg(), string2.getReg(), "1");
+		codeGenerator.put("j", "strcmploop_");
+		codeGenerator.put(bl1+":");
+		codeGenerator.put("beq", oneByteStr2, "$zero", bl3);
+		codeGenerator.put("j", bl2);
+		codeGenerator.put(bl2+":");
+		codeGenerator.put("addi", "$v1", "$zero", "0");
+		codeGenerator.put("j", bl4);
+		codeGenerator.put(bl3+":");
+		codeGenerator.put("addi", "$v1", "$zero", "1");
+		codeGenerator.put(bl4+":");
+//		codeGenerator.put("jr", "$ra");
 		
 //		codeGenerator.put("lb", arg1, arg2, arg3)
 //			loop:

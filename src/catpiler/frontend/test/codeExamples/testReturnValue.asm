@@ -1,0 +1,293 @@
+# size: 275
+.data
+hp0: .space 4
+hp1: .space 4
+hp2: .space 4
+hp3: .space 4
+hp4: .space 4
+hp5: .space 4
+hp6: .space 4
+hp7: .space 4
+hp8: .space 4
+hp9: .space 4
+hp10: .space 4
+hp11: .space 4
+hp12: .space 4
+hp13: .space 4
+hp14: .space 4
+.text
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp0
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp1
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp2
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp3
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp4
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp5
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp6
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp7
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp8
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp9
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp10
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp11
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp12
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp13
+sw $v0 ($t0)
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp14
+sw $v0 ($t0)
+main: 
+add $fp $zero $sp
+subu $sp $sp 4
+addi $v0 $zero 5
+syscall
+lw $t0 0($fp)
+move $t0 $v0
+la $t1 hp0
+lw $t1 ($t1)
+addi $t2 $zero 99
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 97
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 108
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 99
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 117
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 108
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 97
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 116
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 105
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 110
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 103
+sb $t2 ($t1)
+addi $t1 $t1 1
+addi $t2 $zero 32
+sb $t2 ($t1)
+addi $t1 $t1 1
+sb $zero ($t1)
+addi $v0 $zero 4
+la $a0 hp0
+lw $a0 ($a0)
+syscall
+addi $v0 $zero 1
+move $a0 $t0
+syscall
+la $t3 hp1
+lw $t3 ($t3)
+addi $t4 $zero 32
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 102
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 105
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 98
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 111
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 110
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 97
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 99
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 99
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 105
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 32
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 110
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 117
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 109
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 98
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 101
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 114
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 115
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 58
+sb $t4 ($t3)
+addi $t3 $t3 1
+addi $t4 $zero 32
+sb $t4 ($t3)
+addi $t3 $t3 1
+sb $zero ($t3)
+addi $v0 $zero 4
+la $a0 hp1
+lw $a0 ($a0)
+syscall
+subu $sp $sp 4
+move $a0 $t0
+move $s0 $t0
+move $s7 $ra
+move $s6 $fp
+jal fibonacci
+move $fp $s6
+move $ra $s7
+move $t0 $s0
+lw $t5 -4($fp)
+move $t5 $v1
+la $t6 hp2
+lw $t6 ($t6)
+addi $t7 $zero 32
+sb $t7 ($t6)
+addi $t6 $t6 1
+sb $zero ($t6)
+addi $v0 $zero 4
+la $a0 hp2
+lw $a0 ($a0)
+syscall
+addi $v0 $zero 1
+move $a0 $t5
+syscall
+add $sp $zero $fp
+addi $v0 $zero 10
+syscall
+fibonacci: 
+add $fp $zero $sp
+move $t0 $a0
+subu $sp $sp 4
+subu $sp $sp 4
+subu $sp $sp 4
+lw $t1 -4($fp)
+addi $t1 $zero 0
+lw $t2 -8($fp)
+addi $t2 $zero 1
+lw $t3 0($fp)
+addi $t3 $zero 0
+addi $v0 $zero 1
+move $a0 $t2
+syscall
+j calulateFib
+calulateFib: 
+bne $t3 $t0 br0
+addi $v1 $zero 1
+j br1
+br0:
+add $v1 $zero $zero
+j br1
+br1:
+bgtz $v1 br2
+addi $v1 $t3 1
+move $t3 $v1
+subu $sp $sp 4
+add $v1 $t1 $t2
+lw $t4 -12($fp)
+move $t4 $v1
+move $t1 $t2
+move $t2 $t4
+la $t5 hp3
+lw $t5 ($t5)
+addi $t6 $zero 32
+sb $t6 ($t5)
+addi $t5 $t5 1
+sb $zero ($t5)
+addi $v0 $zero 4
+la $a0 hp3
+lw $a0 ($a0)
+syscall
+addi $v0 $zero 1
+move $a0 $t4
+syscall
+j calulateFib
+br2:
+addi $v1 $zero 0
+add $sp $zero $fp
+jr $ra
+add $sp $zero $fp
+jr $ra

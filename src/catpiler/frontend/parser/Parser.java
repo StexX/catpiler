@@ -17,21 +17,19 @@
  */
 package catpiler.frontend.parser;
 
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
-
-import org.junit.Assert;
 
 import catpiler.backend.codegeneration.CodeGenerator;
 import catpiler.backend.codegeneration.MemoryManager;
+import catpiler.backend.linker.Linker;
 import catpiler.frontend.exception.ParseException;
 import catpiler.frontend.exception.SyntaxException;
-import catpiler.frontend.parser.symboltable.FunctionAccessManager;
-import catpiler.frontend.parser.symboltable.FunctionItem;
+import catpiler.frontend.parser.lib.ExtractFileHeader;
 import catpiler.frontend.parser.symboltable.Symboltable;
 import catpiler.frontend.parser.symboltable.SymboltableEntry;
 import catpiler.frontend.parser.symboltable.TypeItem;
@@ -40,18 +38,21 @@ import catpiler.frontend.scanner.keywords.A;
 import catpiler.frontend.scanner.keywords.ALL;
 import catpiler.frontend.scanner.keywords.AN;
 import catpiler.frontend.scanner.keywords.ANY;
+import catpiler.frontend.scanner.keywords.ArrayAccessOp;
 import catpiler.frontend.scanner.keywords.BIGGR;
 import catpiler.frontend.scanner.keywords.BOTH;
-import catpiler.frontend.scanner.keywords.CALL;
 import catpiler.frontend.scanner.keywords.CAN;
 import catpiler.frontend.scanner.keywords.CHAR;
 import catpiler.frontend.scanner.keywords.CHARZ;
 import catpiler.frontend.scanner.keywords.DIFF;
 import catpiler.frontend.scanner.keywords.DIFFRINT;
+import catpiler.frontend.scanner.keywords.DOWANT;
 import catpiler.frontend.scanner.keywords.DUZ;
+import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.EITHER;
 import catpiler.frontend.scanner.keywords.FAIL;
 import catpiler.frontend.scanner.keywords.FOUND;
+import catpiler.frontend.scanner.keywords.GIMMEH;
 import catpiler.frontend.scanner.keywords.GTFO;
 import catpiler.frontend.scanner.keywords.HAI;
 import catpiler.frontend.scanner.keywords.HAS;
@@ -79,6 +80,7 @@ import catpiler.frontend.scanner.keywords.ORLY;
 import catpiler.frontend.scanner.keywords.OUTTA;
 import catpiler.frontend.scanner.keywords.PRODUKT;
 import catpiler.frontend.scanner.keywords.QUOSHUNT;
+import catpiler.frontend.scanner.keywords.QuestionMark;
 import catpiler.frontend.scanner.keywords.R;
 import catpiler.frontend.scanner.keywords.RLY;
 import catpiler.frontend.scanner.keywords.SAEM;
@@ -92,6 +94,7 @@ import catpiler.frontend.scanner.keywords.THATSIT;
 import catpiler.frontend.scanner.keywords.TIL;
 import catpiler.frontend.scanner.keywords.TROOF;
 import catpiler.frontend.scanner.keywords.TROOFZ;
+import catpiler.frontend.scanner.keywords.U;
 import catpiler.frontend.scanner.keywords.VISIBLE;
 import catpiler.frontend.scanner.keywords.WAI;
 import catpiler.frontend.scanner.keywords.WILE;
@@ -121,6 +124,9 @@ public class Parser {
 	
 	int tmpSrcPointer = 0;
 	
+	// hack :(
+	int tmpSrcPointer2 = 0;
+	
 	public boolean parseTest = false;
 
 	private Symboltable symboltable;
@@ -129,35 +135,49 @@ public class Parser {
 	
 	private MemoryManager memoryManager;
 	
-	private FunctionAccessManager functionAccessManager;
-	
 	private int loadStmt;
+	
+	private boolean inFlowControl;
+	
+	private boolean inStruct;
+	
+	private int structOffset;
+	
+	private static boolean separateCompile;
+	
+	public static HashSet<java.lang.String> modules;
+	
+	public java.lang.String currentPath;
+	
+	public java.lang.String currentModule;
+	
+	private ExtractFileHeader extractFileHeader;
+	
+	private void init() {
+		memoryManager = new MemoryManager(codeGenerator);
+		if(symboltable == null) symboltable = new Symboltable("global", null);
+		symboltable.setLevel(0);
+		SymboltableEntry it = new SymboltableEntry();
+		it.setName("IT");
+		it.setCategory("reg");
+		it.setType(NOOB.tokenId);
+		it.setReg("$v1");
+		symboltable.put(it);
+		loadStmt = 0;
+		inFlowControl = false;
+		extractFileHeader = new ExtractFileHeader();
+		modules = new HashSet<java.lang.String>();
+	}
 	
 	public Parser() {
 		codeGenerator = new CodeGenerator(null);
-		memoryManager = new MemoryManager(codeGenerator);
-		functionAccessManager = new FunctionAccessManager();
-		if(symboltable == null) symboltable = new Symboltable("global", null);
-		SymboltableEntry ste = new SymboltableEntry();
-		ste.setName("IT");
-		ste.setCategory("reg");
-		ste.setReg("$v0");
-		symboltable.put(ste);
-		loadStmt = 0;
+		init();
 	}
 	
 	public Parser(java.lang.String filename) {
 		java.lang.String outputName = filename.replace(".lol", ".cat");
 		codeGenerator = new CodeGenerator(outputName);
-		memoryManager = new MemoryManager(codeGenerator);
-		functionAccessManager = new FunctionAccessManager();
-		if(symboltable == null) symboltable = new Symboltable("global", null);
-		SymboltableEntry ste = new SymboltableEntry();
-		ste.setName("IT");
-		ste.setCategory("reg");
-		ste.setReg("$v0");
-		symboltable.put(ste);
-		loadStmt = 0;
+		init();
 	}
 	
 	public SymboltableEntry currentSymboltableEntry;
@@ -180,19 +200,11 @@ public class Parser {
 				} else {
 					ErrorReporter.markError("Missing module");
 				}
-				// [1] Open file moduleKeyword.cat
-				// [2] Create new symbol-file
-				// [3] Write module-caller into symbol-file. Format: (# caller: main.cat, anotherModule.cat)
-				// [4] Start parsing -> will lead to next module import, if any exists
-				// [5] Code generation starts when we are at the bottom of the module tree 
-				//     write code into the symbol file. 
-				// [6] After the parsing, take function names and store them in the symbol-file of the caller 
-				//     Format: (# callee-functions: function1, function2)
-				// [7] Store file size of module file in symbol-file to check whether content has changed
-				//     Format: (# filesize: 439)
-				// [8] Linker copies all files into one big file, don't mind about header, they are 
-				//     commented for MIPS assembler
-				// [9] If a file-size has changed, compile the particular file again and link it. 
+				
+				if(!separateCompile) {
+					Parser.loadSourcecode(currentPath + moduleKeyword.getAttribute() + ".lol");
+				}
+				
 			} else {
 				ErrorReporter.markError("Missing 'HAS' keyword");
 			}
@@ -213,24 +225,31 @@ public class Parser {
 	public boolean isStruct(Keyword keyword) throws ParseException {
 		if(keyword instanceof STUFF) {
 			TypeItem type = new TypeItem();
-			if(!isIdentifier(lookAhead())) {
+			Keyword id = lookAhead();
+			if(!isIdentifier(id)) {
 				ErrorReporter.markError("Missing structure label after 'STUFF'");
 			} else {
 				adjustSrcPointer();
 				// TODO add it to the list of types
-				type.setName(keyword.getAttribute());
+				type.setName(id.getAttribute());
 				symboltable.put(type);
 			}
 			
-			symboltable = new Symboltable(keyword.getAttribute(), symboltable);
+			int lastLvl = symboltable.getLevel();
+			symboltable = new Symboltable(id.getAttribute(), symboltable);
+			symboltable.setLevel(lastLvl+1);
 			
 			Keyword next = null;
+			inStruct = true;
 			while(isVarInit(next = s.lookupToken()) || 
-					isVarDecl(next) || 
-					isVarAssign(next));
+					isVarDecl(next));
 			if(!(next instanceof THATSIT)) {
 				ErrorReporter.markError("Missing 'THATSIT' keyword");
 			}
+			inStruct = false;
+			// store the size of the record in another global data label
+			type.setSize(structOffset);
+			codeGenerator.storeData(id.getAttribute(), ".byte", new Integer(structOffset).toString());
 			
 			Set<java.lang.String> registers = symboltable.getRegInScopeLevel();
 			for(java.lang.String r : registers) {
@@ -291,13 +310,25 @@ public class Parser {
 						entry.setName(id.getAttribute());
 						entry.setType(NOOB.tokenId);
 						entry.setCategory("var");
-						/* I do not know the size for undefined types...
-						 * therefore I'll just create 1 word for a pointer 
-						 * (which then points to the actual data) */
-						int addr = new Integer(codeGenerator.getFp());
-						// set address relative to frame pointer
-						entry.setAddress(new Integer(codeGenerator.getSp() - addr).toString());
-						codeGenerator.decreaseSp(4);
+						if(!inStruct) {
+							/* I do not know the size for undefined types...
+							 * therefore I'll just create 1 word for a pointer 
+							 * (which then points to the actual data) */
+							int addr = new Integer(codeGenerator.getFp());
+							// set address relative to frame pointer
+							entry.setAddress(new Integer(codeGenerator.getSp() - addr).toString());
+							codeGenerator.decreaseSp(4);
+						} else {
+							// if we are currently defining a structure, the label gets 
+							// stored together with the memory offset in the global data segment
+							int addr = new Integer(codeGenerator.getFp());
+							entry.setAddress(new Integer(codeGenerator.getSp() - addr).toString());
+//							codeGenerator.decreaseSp(4);
+							codeGenerator.storeData(symboltable.getName()+"."+id.getAttribute(), 
+									".word", new Integer(structOffset).toString());
+							structOffset = structOffset + 4;
+							entry.setAddress(symboltable.getName()+"."+id.getAttribute());
+						}
 						symboltable.put(entry);
 					}
 				}
@@ -331,14 +362,11 @@ public class Parser {
 		while(isVarInit(k) || isVarDecl(k)) {
 			k = s.lookupToken();
 		}
-		isMain(k);
-		while(isFunction(s.lookupToken()));
-		
-		// check whether every called function is really implemented
-		if(!ErrorReporter.isError() && !functionAccessManager.check()) {
-			ErrorReporter.markError("Not all functions have been correctly implemented: " + 
-					functionAccessManager.getUndefinedFunctions(), false);
-		}
+		if(isMain(k)) {
+			k = s.lookupToken();
+		} 
+		while(isFunction(k))
+			k = s.lookupToken();
 		
 		return true;
 	}
@@ -355,7 +383,9 @@ public class Parser {
 	public boolean isMain(Keyword keyword) throws ParseException {
 		if(keyword instanceof HAI) {
 			
+			int lastLvl = symboltable.getLevel();
 			symboltable = new Symboltable("main", symboltable);
+			symboltable.setLevel(lastLvl+1);
 			codeGenerator.put("main: ");
 			codeGenerator.setFPisSP();
 			
@@ -367,7 +397,7 @@ public class Parser {
 			
 			codeGenerator.setSPisFP();
 			// exit syscall:
-			codeGenerator.put("ADDI", "$v0", "10");
+			codeGenerator.put("addi", "$v0", "$zero", "10");
 			codeGenerator.put("syscall");
 			
 			Set<java.lang.String> registers = symboltable.getRegInScopeLevel();
@@ -400,6 +430,8 @@ public class Parser {
 			return true;
 		} else if(isPrint(keyword)) {
 			return true;
+		} else if(isGetline(keyword)) {
+			return true;
 		} else if(isFlowControl(keyword)) {
 			return true;
 		} else if(isOperation(keyword)) {
@@ -423,56 +455,147 @@ public class Parser {
 	 * @throws ParseException
 	 */
 	public boolean isFuncCall(Keyword keyword) throws ParseException {
-		if(keyword instanceof CALL) {
-			Keyword funcId = lookAhead();
-			if(!isIdentifier(funcId)) {
-				ErrorReporter.markError("Expected function name after 'CALL' keyword");
-			}
-			adjustSrcPointer();
-			
-			Keyword k = s.lookupToken();
-			int i = s.getPointerBeforeToken();
-			
-			ArrayList<java.lang.String> argTypes = new ArrayList<java.lang.String>();
-			while(isOperation(k)) {
-				k = s.lookupToken();
-				i = s.getPointerBeforeToken();
-				if(currentSymboltableEntry == null) {
-					currentSymboltableEntry = symboltable.get("IT");
+		if(keyword instanceof CAN) {
+			if(lookAhead() instanceof U) {
+				adjustSrcPointer();
+				
+				Keyword funcId = lookAhead();
+				if(!isIdentifier(funcId)) {
+					ErrorReporter.markError("Expected function name after 'CAN U' keyword");
 				}
-				if(currentSymboltableEntry.getCategory().equals("heap")) {
-					// TODO: change size
-					memoryManager.increaseReferenceCount(new Integer(currentSymboltableEntry.getHeap()), 1);
-				}
-				/* store arguments in $a0 - $a3 */
-				if(currentSymboltableEntry.getCategory().equals("reg")) {
-					codeGenerator.move2Args(currentSymboltableEntry.getReg());
-				} else if(currentSymboltableEntry.getCategory().equals("const")) {
-					if(currentSymboltableEntry.getType().equals(NUMBR.tokenId)) {
-						java.lang.String reg = codeGenerator.loadImmediately(
-								currentSymboltableEntry.getAttribute());
+				adjustSrcPointer();
+				
+				Keyword k = s.lookupToken();
+				
+				StringBuilder argTypes = new StringBuilder();
+				ArrayList<SymboltableEntry> heapRef = new ArrayList<SymboltableEntry>();
+				
+				while(isOperation(k)) {
+					codeGenerator.clearArgs();
+					
+					k = s.lookupToken();
+					if(currentSymboltableEntry == null) {
+						currentSymboltableEntry = symboltable.get("IT");
+					}
+					
+					if(currentSymboltableEntry.getCategory().equals("heap") && 
+							currentSymboltableEntry.getLevel() != 0) {
+						heapRef.add(currentSymboltableEntry);
+						memoryManager.increaseReferenceCount(
+								currentSymboltableEntry.getHeap(), 
+								currentSymboltableEntry.getHeapsize());
+					}
+					/* store arguments in $a0 - $a3 */
+					if(currentSymboltableEntry.getCategory().equals("reg") && 
+							currentSymboltableEntry.getHeap() == null) {
+						codeGenerator.move2Args(currentSymboltableEntry.getReg());
+					} else if(currentSymboltableEntry.getHeap() != null) {
+						// again some hacking ... no time to think about something clever
+						java.lang.String reg = codeGenerator.loadAddress(currentSymboltableEntry.getHeap());
+						codeGenerator.move2Args(reg);
+					} else if(currentSymboltableEntry.getCategory().equals("const")) {
+						if(currentSymboltableEntry.getType().equals(NUMBR.tokenId)) {
+							java.lang.String reg = codeGenerator.loadImmediately(
+									currentSymboltableEntry.getAttribute());
+							codeGenerator.move2Args(reg);
+						} else if(currentSymboltableEntry.getType().equals(CHARZ.tokenId)) {
+							StringLib.storeString(currentSymboltableEntry);
+							heapRef.add(currentSymboltableEntry);
+							memoryManager.increaseReferenceCount(
+									currentSymboltableEntry.getHeap(), 
+									currentSymboltableEntry.getHeapsize());
+							codeGenerator.move2Args(currentSymboltableEntry.getReg());
+						}
+					} else if(currentSymboltableEntry.getCategory().equals("var")) {
+						java.lang.String reg = codeGenerator.loadWord(
+								currentSymboltableEntry.getAddress());
 						codeGenerator.move2Args(reg);
 					}
-				} else if(currentSymboltableEntry.getCategory().equals("var")) {
-					java.lang.String reg = codeGenerator.loadWord(
-							currentSymboltableEntry.getAddress());
-					codeGenerator.move2Args(reg);
+					argTypes.append(" ");
+					argTypes.append(currentSymboltableEntry.getType());
 				}
-				argTypes.add(currentSymboltableEntry.getType());
+				
+				if(!(k instanceof QuestionMark)) {
+					ErrorReporter.markError("Expected '?' after function declaration");
+				}
+				
+				// linker must check whether function exists or not
+				codeGenerator.getFunctionCalls().add(funcId.getAttribute() + argTypes);
+				
+				/* combines one register with one stack-address */
+				HashMap<java.lang.String, java.lang.String> saveRegister = 
+					new HashMap<java.lang.String, java.lang.String>();
+				
+				if(!symboltable.getName().equals("main")) {
+					
+					// save $s0 - $s7 on the stack
+					for(int i=0; i<8; i++) {
+						java.lang.String address = new java.lang.String();
+						int addr = new Integer(codeGenerator.getFp());
+//						// set address relative to frame pointer
+						address = new Integer(codeGenerator.getSp() - addr).toString();
+						codeGenerator.decreaseSp(4);
+						codeGenerator.put("sw", "$s"+i, address + "($fp)");
+						saveRegister.put("$s"+i, address);
+					}
+				}
+				
+				/* combines one temporary register with one saver register */
+				HashMap<java.lang.String, SymboltableEntry> tmpRegister = 
+					new HashMap<java.lang.String, SymboltableEntry>();
+				
+				// save current symboltable entries in $s0 - $s7
+				codeGenerator.clearSavers();
+				Symboltable tmpTable = symboltable;
+				Symboltable globaleTable = symboltable.getGlobalTable();
+				while(tmpTable != globaleTable) {
+					for(java.lang.String var : tmpTable.getHashEntry().keySet()) {
+						SymboltableEntry ste = tmpTable.get(var);
+						if(ste.getCategory().equals("reg") && !ste.getName().equals("IT")) {
+							java.lang.String saver = codeGenerator.move2Savers(ste.getReg());
+							tmpRegister.put(ste.getReg(), ste);
+							codeGenerator.releaseRegister(ste.getReg());
+							ste.setReg(saver);
+						}
+					}
+					tmpTable = tmpTable.getOutterTable();
+				}
+				
+				// store return address in saver register
+				codeGenerator.put("move", "$s7", "$ra");
+				// store last frame pointer in saver register
+				codeGenerator.put("move", "$s6", "$fp");
+				
+				// call function
+				codeGenerator.put("jal", funcId.getAttribute());
+				
+				// restore frame pointer
+				codeGenerator.put("move", "$fp", "$s6");
+				// restore return address
+				codeGenerator.put("move", "$ra", "$s7");
+
+				/* move save register back to temp register */
+				for(java.lang.String treg : tmpRegister.keySet()) {
+					SymboltableEntry ste = tmpRegister.get(treg);
+					// treg = ste.getReg
+					codeGenerator.put("move", treg, ste.getReg());
+					ste.setReg(treg);
+				}
+				
+				/* move stack-content back to saver register */
+				for(java.lang.String savereg : saveRegister.keySet()) {
+					java.lang.String address = saveRegister.get(savereg);
+					codeGenerator.put("lw", savereg, address + "($fp)");
+				}
+				
+				for(SymboltableEntry ste : heapRef) {
+					memoryManager.decreaseReferenceCount(ste.getHeap(), ste.getHeapsize());
+				}
+				
+				return true;
+			} else {
+				return false;
 			}
-			
-			s.setSrcPointer(i);
-			
-			// linker must check whether function exists or not
-			FunctionItem functionItem = new FunctionItem();
-			functionItem.setFunctionName(funcId.getAttribute());
-			functionItem.setArgumentTypes(argTypes);
-			functionAccessManager.addFunctionCaller(functionItem);
-			
-			// call function
-			codeGenerator.put("jal", funcId.getAttribute());
-			
-			return true;
 		} else {
 			return false;
 		}
@@ -480,23 +603,42 @@ public class Parser {
 	
 	public boolean isPrint(Keyword keyword) throws ParseException {
 		if(keyword instanceof VISIBLE) {
-			Keyword lookahead = lookAhead();
-			if(isStringOp(lookahead)) {
+			
+			Keyword output = s.lookupToken();
+			if(isStringOp(output)) {
 				
-				adjustSrcPointer();
-				
-				codeGenerator.put("ADDI", "$v0", "4");
-				if(currentSymboltableEntry.getCategory().equals("reg")) {
+				if(currentSymboltableEntry.getName().equals("IT")) {
+					codeGenerator.put("addi", "$v0", "$zero", "4");
+					codeGenerator.put("move", "$a0", "$v1");
+					codeGenerator.put("lw", "$a0", "($a0)");
+				} else if(currentSymboltableEntry.getCategory().equals("heap")) {
+					if(currentSymboltableEntry.getReg() == null) {
+						codeGenerator.put("addi", "$v0", "$zero", "4");
+						codeGenerator.put("la", "$a0", currentSymboltableEntry.getHeap());
+						codeGenerator.put("lw", "$a0", "($a0)");
+					} else {
+						codeGenerator.put("addi", "$v0", "$zero", "4");
+						codeGenerator.put("move", "$a0", currentSymboltableEntry.getReg());
+						codeGenerator.put("lw", "$a0", "($a0)");
+					}
+				} else if(currentSymboltableEntry.getCategory().equals("reg")) {
+					codeGenerator.put("addi", "$v0", "$zero", "4");
 					codeGenerator.put("move", "$a0", currentSymboltableEntry.getReg());
+					codeGenerator.put("lw", "$a0", "($a0)");
 				} else if(currentSymboltableEntry.getCategory().equals("var")) {
 					/* address to heap is stored on stack 
 					 * -> add content of stack into register 
 					 * (this should be equivalent to loading the address)*/
-					codeGenerator.put("lw", "$a0", currentSymboltableEntry.getAddress());
+					codeGenerator.put("addi", "$v0", "$zero", "4");
+					// TODO: test whether relative address is ok
+					codeGenerator.put("lw", "$a0", currentSymboltableEntry.getAddress() + "($fp)");
+					codeGenerator.put("lw", "$a0", "($a0)");
 				} else if(currentSymboltableEntry.getCategory().equals("const")) {
 					StringLib.init(codeGenerator, memoryManager);
 					StringLib.storeString(currentSymboltableEntry);
+					codeGenerator.put("addi", "$v0", "$zero", "4");
 					codeGenerator.put("la", "$a0", currentSymboltableEntry.getHeap());
+					codeGenerator.put("lw", "$a0", "($a0)");
 //					// TODO: assign and load address
 //					int sizeOfStr = currentSymboltableEntry.getAttribute().length();
 //					
@@ -513,10 +655,9 @@ public class Parser {
 //					currentSymboltableEntry.setCategory("heap");
 //					codeGenerator.put("la", "$a0", "hp" + new Integer(start).toString());
 				}
-			} else if(isNumOp(lookahead)) {
-				adjustSrcPointer();
+			} else if(isNumOp(output)) {
 				
-				codeGenerator.put("ADDI", "$v0", "1");
+				codeGenerator.put("addi", "$v0", "$zero", "1");
 				
 				if(currentSymboltableEntry.getCategory().equals("reg")) {
 					codeGenerator.put("move", "$a0", currentSymboltableEntry.getReg());
@@ -536,6 +677,69 @@ public class Parser {
 				ErrorReporter.markError("Expected a string");
 			}
 			codeGenerator.put("syscall");
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean isGetline(Keyword keyword) throws ParseException {
+		if(keyword instanceof GIMMEH) {
+			Keyword lookahead = lookAhead();
+			if(isIdentifier(lookahead)) {
+				
+				adjustSrcPointer();
+				
+				SymboltableEntry ste = symboltable.get(lookahead.getAttribute());
+				if(ste != null) {
+					if(ste.getType().equals(NUMBR.tokenId)) {
+						codeGenerator.put("addi", "$v0", "$zero", "5");
+						codeGenerator.put("syscall");
+						if(ste.getCategory().equals("var")) {
+							java.lang.String reg = codeGenerator.loadWord(ste.getAddress());
+							ste.setReg(reg);
+							ste.setCategory("reg");
+						}
+						codeGenerator.put("move", ste.getReg(), "$v0");
+					} else if(ste.getType().equals(CHARZ.tokenId)) {
+						codeGenerator.put("addi", "$v0", "$zero", "8");
+						
+						if(ste.getCategory().equals("var")) {
+							java.lang.String reg = codeGenerator.loadWord(ste.getAddress());
+							ste.setReg(reg);
+						}
+						
+						if(ste.getHeap() == null) {
+							int size = 256;
+							int start = memoryManager.allocateMemory(size);
+							java.lang.String heap = "hp" + new Integer(start);
+							
+							int blocks;
+							if(size % memoryManager.BLOCKSIZE == 0) {
+								blocks = size / memoryManager.BLOCKSIZE;
+							} else {
+								blocks = size / memoryManager.BLOCKSIZE + 1;
+							}
+							ste.setHeapsize(blocks);
+							ste.setHeap(heap);
+						}
+						
+						java.lang.String temp = codeGenerator.getNextFreeTemporary();
+						codeGenerator.put("addi", "$a1", "$zero", new Integer(ste.getHeapsize() * memoryManager.BLOCKSIZE).toString());
+						codeGenerator.put("la", temp, ste.getHeap());
+						codeGenerator.put("lw", "$a0", "("+temp+")");
+						
+						codeGenerator.put("syscall");
+					} else {
+						ErrorReporter.markError("Cannot read variable of type " + ste.getType());
+					}
+					
+				} else {
+					ErrorReporter.markError("Variable " + 
+							lookahead.getAttribute() + " was not declared");
+				}
+			} else {
+				ErrorReporter.markError("Expected variable identifier");
+			}
 			return true;
 		}
 		return false;
@@ -580,9 +784,9 @@ public class Parser {
 			java.lang.String arg2 = null;
 			java.lang.String arg3 = null;
 			if(keyword instanceof BOTH)
-				op = new java.lang.String("AND");
+				op = new java.lang.String("and");
 			else if(keyword instanceof EITHER)
-				op = new java.lang.String("OR");
+				op = new java.lang.String("or");
 			
 			if(symboltable == null) { 
 				symboltable = new Symboltable("main", null);
@@ -601,7 +805,6 @@ public class Parser {
 					arg2 = currentSymboltableEntry.getReg();
 				} else if(currentSymboltableEntry.getCategory() != null && 
 						currentSymboltableEntry.getCategory().equals("var")) {
-					// currentKeyword.getAddress() contains address - let's load it into a register
 					arg2 = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
 					loadStmt++;
 					// now set the attribute to the register name
@@ -611,7 +814,7 @@ public class Parser {
 						currentSymboltableEntry.getCategory().equals("const")) {
 					// switch arguments if one of them is a constant
 					arg2 = null;
-					op = op + "I";
+					op = op + "i";
 					
 					arg3 = currentSymboltableEntry.getAttribute();
 				} else {
@@ -678,7 +881,7 @@ public class Parser {
 					
 					// if both arguments are constants, don't generate any code 
 					if(arg2 == null) {
-						if(op.equals("ANDI")) {
+						if(op.equals("andi")) {
 							java.lang.String arg1;
 							if(currentSymboltableEntry.getAttribute().equals("1")) {
 								if(arg3.equals("0")) {
@@ -696,7 +899,7 @@ public class Parser {
 							currentSymboltableEntry.setCategory("const");
 							currentSymboltableEntry.setAttribute(arg1);
 							
-						} else if(op.equals("ORI")) {
+						} else if(op.equals("ori")) {
 							java.lang.String arg1;
 							if(currentSymboltableEntry.getAttribute().equals("1")) {
 								arg1 = "1";
@@ -716,9 +919,8 @@ public class Parser {
 							currentSymboltableEntry.setCategory("const");
 							currentSymboltableEntry.setAttribute(arg1);
 						}
-						currentSymboltableEntry.setNeedRefresh(true);
 					} else {
-						op = op + "I";
+						op = op + "i";
 						if(currentSymboltableEntry.getAttribute().equals("1")) {
 							arg3 = "1";
 						} else {
@@ -752,7 +954,6 @@ public class Parser {
 					} else {
 						currentSymboltableEntry.setAttribute("1");
 					}
-					currentSymboltableEntry.setNeedRefresh(true);
 				} else { 
 					java.lang.String arg1;
 					if(currentSymboltableEntry.getCategory().equals("var")) {
@@ -779,7 +980,6 @@ public class Parser {
 					currentSymboltableEntry.setAttribute("0");
 				}
 				currentSymboltableEntry.setCategory("const");
-				currentSymboltableEntry.setNeedRefresh(true);
 				currentSymboltableEntry.setType("TROOF");
 			}
 			return true;
@@ -795,7 +995,7 @@ public class Parser {
 				}
 				
 				if(!ErrorReporter.isError()) {
-					if(ste.getAttribute() == null) {
+					if(ste.getAttribute() == null || inFlowControl) {
 						// load variable if no value exists
 						java.lang.String reg;
 						if(ste.getCategory().equals("var")) {
@@ -807,10 +1007,11 @@ public class Parser {
 						} else {
 							reg = ste.getReg();
 						}
-						ste.setNeedRefresh(true);
+						if(ste.getAttribute() != null) {
+							codeGenerator.put("addi", ste.getReg(), "$zero", ste.getAttribute());
+						}
 					} else {
 						ste.setCategory("const");
-						ste.setNeedRefresh(true);
 					}
 					currentSymboltableEntry = ste;
 				}
@@ -867,18 +1068,18 @@ public class Parser {
 						if(keyword instanceof DIFFRINT) {
 							if(ste1.getAttribute().equals(ste2.getAttribute())) {
 								currentSymboltableEntry.setAttribute("0");
-								codeGenerator.put("addi", "$v0", "$r0", "0");
+								codeGenerator.put("addi", "$v1", "$zero", "0");
 							} else {
 								currentSymboltableEntry.setAttribute("1");
-								codeGenerator.put("addi", "$v0", "$r0", "1");
+								codeGenerator.put("addi", "$v1", "$zero", "1");
 							}
 						} else if(keyword instanceof BOTH) {
 							if(ste1.getAttribute().equals(ste2.getAttribute())) {
 								currentSymboltableEntry.setAttribute("1");
-								codeGenerator.put("addi", "$v0", "$r0", "1");
+								codeGenerator.put("addi", "$v1", "$zero", "1");
 							} else {
 								currentSymboltableEntry.setAttribute("0");
-								codeGenerator.put("addi", "$v0", "$r0", "0");
+								codeGenerator.put("addi", "$v1", "$zero", "0");
 							}
 						}
 					} else {
@@ -905,16 +1106,24 @@ public class Parser {
 						}
 						
 						// generate code for != or == expression
-						if(keyword instanceof DIFFRINT) {
-							codeGenerator.put("bne", ste1.getReg(), ste2.getReg(), "3");
-							codeGenerator.put("addi", "$v0", "$r0", "1");
-							codeGenerator.put("j", "2");
-							codeGenerator.put("add", "$v0", "$r0", "$r0");
-						} else if(keyword instanceof BOTH) {
-							codeGenerator.put("beq", ste1.getReg(), ste2.getReg(), "3");
-							codeGenerator.put("addi", "$v0", "$r0", "1");
-							codeGenerator.put("j", "2");
-							codeGenerator.put("add", "$v0", "$r0", "$r0");
+						java.lang.String brLabel1 = codeGenerator.getBranchLabel();
+						java.lang.String brLabel2 = codeGenerator.getBranchLabel();
+						if(keyword instanceof BOTH) {
+							codeGenerator.put("bne", ste1.getReg(), ste2.getReg(), brLabel1);
+							codeGenerator.put("addi", "$v1", "$zero", "1");
+							codeGenerator.put("j", brLabel2);
+							codeGenerator.put(brLabel1 + ":");
+							codeGenerator.put("add", "$v1", "$zero", "$zero");
+							codeGenerator.put("j", brLabel2);
+							codeGenerator.put(brLabel2 + ":");
+						} else if(keyword instanceof DIFFRINT) {
+							codeGenerator.put("beq", ste1.getReg(), ste2.getReg(), brLabel1);
+							codeGenerator.put("addi", "$v1", "$zero", "1");
+							codeGenerator.put("j", brLabel2);
+							codeGenerator.put(brLabel1 + ":");
+							codeGenerator.put("add", "$v1", "$zero", "$zero");
+							codeGenerator.put("j", brLabel2);
+							codeGenerator.put(brLabel2 + ":");
 						}
 					}
 				} else if(ste1.getType().equals(NUMBRZ.tokenId) ||
@@ -930,18 +1139,18 @@ public class Parser {
 						if(keyword instanceof DIFFRINT) {
 							if(ste1.getAttribute().equals(ste2.getAttribute())) {
 								currentSymboltableEntry.setAttribute("0");
-								codeGenerator.put("addi", "$v0", "$r0", "0");
+								codeGenerator.put("addi", "$v1", "$zero", "0");
 							} else {
 								currentSymboltableEntry.setAttribute("1");
-								codeGenerator.put("addi", "$v0", "$r0", "1");
+								codeGenerator.put("addi", "$v1", "$zero", "1");
 							}
 						} else if(keyword instanceof BOTH) {
 							if(ste1.getAttribute().equals(ste2.getAttribute())) {
 								currentSymboltableEntry.setAttribute("1");
-								codeGenerator.put("addi", "$v0", "$r0", "1");
+								codeGenerator.put("addi", "$v1", "$zero", "1");
 							} else {
 								currentSymboltableEntry.setAttribute("0");
-								codeGenerator.put("addi", "$v0", "$r0", "0");
+								codeGenerator.put("addi", "$v1", "$zero", "0");
 							}
 						}
 					} else {
@@ -1031,7 +1240,12 @@ public class Parser {
 	}
 
 	public boolean isFlowControl(Keyword keyword) throws ParseException {
-		return (isIf(keyword) || isLoop(keyword));
+		boolean ret = false;
+		inFlowControl = true;
+		ret = (isIf(keyword) || isLoop(keyword));
+		if(symboltable.getLevel() <= 1)
+			inFlowControl = false;
+		return ret;
 	}
 
 	public boolean isLoop(Keyword keyword) throws ParseException {
@@ -1044,11 +1258,13 @@ public class Parser {
 				adjustSrcPointer();
 			}
 			
+			int lastLvl = symboltable.getLevel();
 			symboltable = new Symboltable("main", symboltable);
+			symboltable.setLevel(lastLvl+1);
 			boolean skipLoop = false;
 			boolean needFixUp = false;
 			int jumpFixup = 0; 
-			int branchFixup = 0;
+			java.lang.String branchFixup = new java.lang.String();
 			
 			if(!(lookAhead() instanceof YR)) {
 				ErrorReporter.markError("Missing 'YR' keyword");
@@ -1071,6 +1287,9 @@ public class Parser {
 				loopLabel = id_loop.getAttribute();
 			}
 			
+			codeGenerator.put("j", loopLabel);
+			codeGenerator.put(loopLabel + ": ");
+			
 			Keyword tok = s.lookupToken();
 			if(tok instanceof YR) {
 				if(!(lookAhead() instanceof Identifier)) {
@@ -1089,7 +1308,7 @@ public class Parser {
 				}
 				jumpFixup = jumpFixup + loadStmt;
 				loadStmt = 0;
-				// Expression, stored in $v0
+				// Expression, stored in $v1
 				// Branch on equal to end of loop (store loopoffset)
 				// Jump on end of loop to first expression
 				if(currentSymboltableEntry == null) {
@@ -1100,13 +1319,14 @@ public class Parser {
 						skipLoop = true;
 					}
 				} else {
-					branchFixup = codeGenerator.getPc();
+					branchFixup = codeGenerator.getBranchLabel();
+					
 					if(tok instanceof WILE) {
-						// if $v0 = 0 -> skip loop
-						codeGenerator.put("BEQ", "$r0", "$v0", "offset");
+						// if $v1 = 0 -> skip loop
+						codeGenerator.put("beq", "$zero", "$v1", branchFixup);
 					} else if(tok instanceof TIL) {
-						// if $v0 = 1 -> skip loop
-						codeGenerator.put("BGTZ", "$v0", "offset");
+						// if $v1 = 1 -> skip loop
+						codeGenerator.put("bgtz", "$v1", branchFixup);
 					}
 					needFixUp = true;
 				}
@@ -1127,13 +1347,19 @@ public class Parser {
 				tok = s.lookupToken();
 				if(currentSymboltableEntry == null)
 					currentSymboltableEntry = symboltable.get("IT");
-				if(currentSymboltableEntry.isNeedRefresh()) {
-					codeGenerator.put(
-							"ADDI", 
-							currentSymboltableEntry.getReg(), 
-							"$r0", 
-							currentSymboltableEntry.getAttribute());
-				}
+//				if(currentSymboltableEntry.isNeedLoad()) {
+//					if(currentSymboltableEntry.getCategory().equals("var")) {
+//						java.lang.String reg = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
+//						currentSymboltableEntry.setReg(reg);
+//						currentSymboltableEntry.setCategory("reg");
+//					}
+//					codeGenerator.put(
+//							"addi", 
+//							currentSymboltableEntry.getReg(), 
+//							"$zero", 
+//							currentSymboltableEntry.getAttribute());
+//					currentSymboltableEntry.setNeedLoad(false);
+//				}
 			}
 			
 			if(skipLoop) {
@@ -1169,10 +1395,11 @@ public class Parser {
 			}
 			
 			if(!ErrorReporter.isError()) {
-				codeGenerator.put("J", new Integer(jumpFixup - codeGenerator.getPc()).toString());
+				codeGenerator.put("j", loopLabel);
 			}
 			if(needFixUp && !ErrorReporter.isError()) {
-				codeGenerator.fixUp(branchFixup, codeGenerator.getPc() - branchFixup);
+				codeGenerator.put(branchFixup + ":");
+//				codeGenerator.fixUp(branchFixup, codeGenerator.getPc() - branchFixup);
 			}
 			
 			Set<java.lang.String> registers = symboltable.getRegInScopeLevel();
@@ -1195,13 +1422,55 @@ public class Parser {
 			boolean skipElse = false;
 			boolean skipFollowing = false;
 			boolean needFixUp = false;
-			int fixupLine = 0;
-			int jumpFixupLine = 0;
+			java.lang.String fixupLine = new java.lang.String();
+			java.lang.String jump2End = codeGenerator.getBranchLabel();
+			
+//			for(java.lang.String sym : symboltable.getHashEntry().keySet()) {
+//				SymboltableEntry ste = symboltable.getHashEntry().get(sym);
+//				if(ste.isNeedLoad()) {
+//					if(ste.getCategory().equals("var")) {
+//						java.lang.String reg = codeGenerator.loadWord(ste.getAddress());
+//						ste.setReg(reg);
+//						ste.setCategory("reg");
+//					} else {
+//						// store if currentSymboltableEntry != IT && category = reg
+//						if(ste.getCategory().equals("reg") &&
+//								!ste.getName().equals("IT")) {
+//							java.lang.String reg = codeGenerator.loadWord(ste.getAddress());
+//							if(ste.getAddress() == null) {
+//								/* I do not know the size for undefined types...
+//								 * therefore I'll just create 1 word for a pointer 
+//								 * (which then points to the actual data) */
+//								int addr = new Integer(codeGenerator.getFp());
+//								// set address relative to frame pointer
+//								ste.setAddress(new Integer(codeGenerator.getSp() - addr).toString());
+//								codeGenerator.decreaseSp(4);
+//							}
+//							codeGenerator.put("sw", ste.getReg(), ste.getAddress());
+//						}
+//					}
+//					
+//					if(ste.getAttribute() != null) {
+//						codeGenerator.put(
+//								"addi", 
+//								ste.getReg(), 
+//								"$zero", 
+//								ste.getAttribute());
+//					} else if(ste.getAttribute() == null) {
+//						codeGenerator.put(
+//								"move", "$v1", 
+//								ste.getReg());
+//					}
+//					
+//					ste.setNeedLoad(false);
+//				}
+//			}
 			
 			if(currentSymboltableEntry ==  null) {
 				currentSymboltableEntry = symboltable.get("IT");
 			}
-			if(currentSymboltableEntry.getCategory().equals("const")) {
+			if(currentSymboltableEntry.getName().equals("") && 
+					currentSymboltableEntry.getCategory().equals("const")) {
 				if(currentSymboltableEntry.getAttribute().equals("1")) {
 					System.out.println("Skipping else if and else statements");
 					skipElse = true;
@@ -1211,8 +1480,8 @@ public class Parser {
 					skipIf = true;
 				}
 			} else {
-				fixupLine = codeGenerator.getPc();
-				codeGenerator.put("BEQ", "$r0", "$v0", "offset");
+				fixupLine = codeGenerator.getBranchLabel();
+				codeGenerator.put("beq", "$zero", "$v1", fixupLine);
 				needFixUp = true;
 			}
 			
@@ -1228,7 +1497,9 @@ public class Parser {
 				adjustSrcPointer();
 			}
 			
+			int lastLvl = symboltable.getLevel();
 			symboltable = new Symboltable(symboltable.getName()+"_if", symboltable);
+			symboltable.setLevel(lastLvl+1);
 			
 			// temporarily switch off code generation, if skipIf is true
 			// switching of code generation is realized by setting the 
@@ -1248,31 +1519,61 @@ public class Parser {
 			while(isStatement(k = s.lookupToken()));
 			
 			if(!skipIf && !ErrorReporter.isError()) {
-				if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
-					java.lang.String result = currentSymboltableEntry.getAttribute();
-					currentSymboltableEntry = symboltable.get("IT");
-					codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", result);
-				}
-				if(currentSymboltableEntry.isNeedRefresh()) {
-					if(currentSymboltableEntry.getCategory().equals("var")) {
-						java.lang.String reg = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
-						currentSymboltableEntry.setReg(reg);
-						currentSymboltableEntry.setCategory("reg");
+				if(currentSymboltableEntry.getType().equals(NUMBR.tokenId) || 
+						currentSymboltableEntry.getType().equals(TROOF.tokenId) ||
+						currentSymboltableEntry.getType().equals(CHAR.tokenId)) {
+					if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
+						java.lang.String result = currentSymboltableEntry.getAttribute();
+						currentSymboltableEntry = symboltable.get("IT");
+						codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", result);
 					}
-					if(currentSymboltableEntry.getAttribute() != null) {
-						codeGenerator.put(
-								"ADDI", 
-								currentSymboltableEntry.getReg(), 
-								"$r0", 
-								currentSymboltableEntry.getAttribute());
-					} else if(currentSymboltableEntry.getAttribute() == null) {
-						codeGenerator.put(
-								"MOVE", "$v0", 
-								currentSymboltableEntry.getReg());
+				} else if(currentSymboltableEntry.getType().equals(NUMBRZ.tokenId) || 
+						currentSymboltableEntry.getType().equals(TROOFZ.tokenId) ||
+						currentSymboltableEntry.getType().equals(CHARZ.tokenId) ||
+						symboltable.existsType(currentSymboltableEntry.getType())) {
+					if(currentSymboltableEntry.getCategory().equals("const")) {
+						StringLib.storeString(currentSymboltableEntry);
 					}
 				}
-				jumpFixupLine = codeGenerator.getPc();
-				codeGenerator.put("J", "offset");
+//				if(currentSymboltableEntry.isNeedRefresh()) {
+//					if(currentSymboltableEntry.getCategory().equals("var")) {
+//						java.lang.String reg = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
+//						currentSymboltableEntry.setReg(reg);
+//						currentSymboltableEntry.setCategory("reg");
+//					} else {
+//						// store if currentSymboltableEntry != IT && category = reg
+//						if(currentSymboltableEntry.getCategory().equals("reg") &&
+//								!currentSymboltableEntry.getName().equals("IT")) {
+//							java.lang.String reg = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
+//							if(currentSymboltableEntry.getAddress() == null) {
+//								/* I do not know the size for undefined types...
+//								 * therefore I'll just create 1 word for a pointer 
+//								 * (which then points to the actual data) */
+//								int addr = new Integer(codeGenerator.getFp());
+//								// set address relative to frame pointer
+//								currentSymboltableEntry.setAddress(new Integer(codeGenerator.getSp() - addr).toString());
+//								codeGenerator.decreaseSp(4);
+//							}
+//							codeGenerator.put("sw", currentSymboltableEntry.getReg(), currentSymboltableEntry.getAddress());
+//						}
+//					}
+//					if(currentSymboltableEntry.getAttribute() != null) {
+//						codeGenerator.put(
+//								"addi", 
+//								currentSymboltableEntry.getReg(), 
+//								"$zero", 
+//								currentSymboltableEntry.getAttribute());
+//					} else if(currentSymboltableEntry.getAttribute() == null) {
+//						codeGenerator.put(
+//								"move", "$v1", 
+//								currentSymboltableEntry.getReg());
+//					}
+//					
+//					currentSymboltableEntry.setNeedRefresh(false);
+//				}
+				if(!skipFollowing) {
+					codeGenerator.put("j", jump2End);
+				}
 			}
 			
 			// switch code generation on again
@@ -1295,7 +1596,9 @@ public class Parser {
 			
 			while(k instanceof MEBBE) {
 				
+				int lastLvl2 = symboltable.getLevel();
 				symboltable = new Symboltable(symboltable.getName()+"_elseif", symboltable);
+				symboltable.setLevel(lastLvl2+1);
 				
 				if(skipElse && ErrorReporter.isError() == false) {
 					ErrorReporter.setError(true);
@@ -1305,25 +1608,28 @@ public class Parser {
 				}
 				
 				if(needFixUp && !ErrorReporter.isError()) {
-					codeGenerator.fixUp(fixupLine, codeGenerator.getPc() - fixupLine);
+					codeGenerator.put(fixupLine + ":");
 				}
 				
 				if(!isExpr(s.lookupToken())) {
 					ErrorReporter.markError("Expected expression after 'MEBBE'");
 				}
-				if(currentSymboltableEntry.isNeedRefresh()) {
-					if(currentSymboltableEntry.getAttribute() != null) {
-						codeGenerator.put(
-								"ADDI", 
-								currentSymboltableEntry.getReg(), 
-								"$r0", 
-								currentSymboltableEntry.getAttribute());
-					} else if(currentSymboltableEntry.getAttribute() == null) {
-						codeGenerator.put(
-								"MOVE", "$v0", 
-								currentSymboltableEntry.getReg());
-					}
-				}
+				
+//				if(!ErrorReporter.isError() && currentSymboltableEntry.isNeedRefresh()) {
+//					if(currentSymboltableEntry.getCategory().equals("reg")) {
+//						if(currentSymboltableEntry.getAttribute() != null) {
+//							codeGenerator.put(
+//									"addi", 
+//									currentSymboltableEntry.getReg(), 
+//									"$zero", 
+//									currentSymboltableEntry.getAttribute());
+//						} else if(currentSymboltableEntry.getAttribute() == null) {
+//							codeGenerator.put(
+//									"move", "$v1", 
+//									currentSymboltableEntry.getReg());
+//						}
+//					}
+//				}
 				
 				if(currentSymboltableEntry ==  null) {
 					currentSymboltableEntry = symboltable.get("IT");
@@ -1341,10 +1647,6 @@ public class Parser {
 					} else {
 						System.out.println("Skipped following statement");
 					}
-				} else if(!ErrorReporter.isError()){
-					fixupLine = codeGenerator.getPc();
-					codeGenerator.put("BEQ", "$r0", "$v0", "offset");
-					needFixUp = true;
 				}
 				
 				if(!isStatement(k = s.lookupToken())) {
@@ -1353,6 +1655,35 @@ public class Parser {
 				
 				while(isStatement(k = s.lookupToken()));
 				
+				if(!ErrorReporter.isError()) {
+					if(currentSymboltableEntry.getType().equals(NUMBR.tokenId) || 
+							currentSymboltableEntry.getType().equals(TROOF.tokenId) ||
+							currentSymboltableEntry.getType().equals(CHAR.tokenId)) {
+						if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
+							java.lang.String result = currentSymboltableEntry.getAttribute();
+							currentSymboltableEntry = symboltable.get("IT");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", result);
+						}
+					} else if(currentSymboltableEntry.getType().equals(NUMBRZ.tokenId) || 
+							currentSymboltableEntry.getType().equals(TROOFZ.tokenId) ||
+							currentSymboltableEntry.getType().equals(CHARZ.tokenId) ||
+							symboltable.existsType(currentSymboltableEntry.getType())) {
+						if(currentSymboltableEntry.getCategory().equals("const")) {
+							StringLib.storeString(currentSymboltableEntry);
+						}
+					}
+					if(!skipFollowing) {
+//						codeGenerator.fixUp(jumpFixupLine, 
+//								codeGenerator.getPc() - jumpFixupLine);
+//						jumpFixupLine = codeGenerator.getPc();
+						codeGenerator.put("j", jump2End);
+					} else {
+						fixupLine = codeGenerator.getBranchLabel();
+						codeGenerator.put("j", fixupLine);
+						needFixUp = true;
+					}
+				}
+				
 				if(skipElse && !skipFollowing) {
 					ErrorReporter.setError(false);
 					skipElse = false;
@@ -1360,17 +1691,6 @@ public class Parser {
 					skipElse = true;
 				}
 				
-				if(!ErrorReporter.isError()) {
-					if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
-						java.lang.String result = currentSymboltableEntry.getAttribute();
-						currentSymboltableEntry = symboltable.get("IT");
-						codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", result);
-					}
-					codeGenerator.fixUp(jumpFixupLine, 
-							codeGenerator.getPc() - jumpFixupLine);
-					jumpFixupLine = codeGenerator.getPc();
-					codeGenerator.put("J", "offset");
-				}
 				Set<java.lang.String> registers = symboltable.getRegInScopeLevel();
 				for(java.lang.String r : registers) {
 					codeGenerator.releaseRegister(r);
@@ -1380,7 +1700,9 @@ public class Parser {
 			}
 			if(k instanceof NO) {
 				
+				int lastLvl3 = symboltable.getLevel();
 				symboltable = new Symboltable(symboltable.getName()+"_else", symboltable);
+				symboltable.setLevel(lastLvl3+1);
 				
 				if(skipElse && ErrorReporter.isError() == false) {
 					ErrorReporter.setError(true);
@@ -1395,7 +1717,7 @@ public class Parser {
 				}
 				
 				if(needFixUp && !ErrorReporter.isError()) {
-					codeGenerator.fixUp(fixupLine, codeGenerator.getPc() - fixupLine);
+					codeGenerator.put(fixupLine + ":");
 				}
 				if(!isStatement(k = s.lookupToken())) {
 					ErrorReporter.markError("Expected statement after condition");
@@ -1404,15 +1726,26 @@ public class Parser {
 				while(isStatement(k = s.lookupToken()));
 				
 				if(!ErrorReporter.isError()) {
-					if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
-						java.lang.String result = currentSymboltableEntry.getAttribute();
-						currentSymboltableEntry = symboltable.get("IT");
-						codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", result);
+					if(currentSymboltableEntry.getType().equals(NUMBR.tokenId) || 
+							currentSymboltableEntry.getType().equals(TROOF.tokenId) ||
+							currentSymboltableEntry.getType().equals(CHAR.tokenId)) {
+						if(!currentSymboltableEntry.getName().equals("IT") && currentSymboltableEntry.getCategory().equals("const")) {
+							java.lang.String result = currentSymboltableEntry.getAttribute();
+							currentSymboltableEntry = symboltable.get("IT");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", result);
+						}
+					} else if(currentSymboltableEntry.getType().equals(NUMBRZ.tokenId) || 
+							currentSymboltableEntry.getType().equals(TROOFZ.tokenId) ||
+							currentSymboltableEntry.getType().equals(CHARZ.tokenId) ||
+							symboltable.existsType(currentSymboltableEntry.getType())) {
+						if(currentSymboltableEntry.getCategory().equals("const")) {
+							StringLib.storeString(currentSymboltableEntry);
+						}
 					}
-					codeGenerator.fixUp(jumpFixupLine, 
-							codeGenerator.getPc() - jumpFixupLine);
-					jumpFixupLine = codeGenerator.getPc();
-//						codeGenerator.put("J", "offset");
+
+					fixupLine = codeGenerator.getBranchLabel();
+					codeGenerator.put("j", fixupLine);
+					needFixUp = true;
 				}
 				
 				Set<java.lang.String> registers = symboltable.getRegInScopeLevel();
@@ -1421,6 +1754,10 @@ public class Parser {
 				}
 				codeGenerator.nft = codeGenerator.nft - registers.size();
 				symboltable = symboltable.getOutterTable();
+			}
+			
+			if(needFixUp && !ErrorReporter.isError()) {
+				codeGenerator.put(fixupLine + ":");
 			}
 			
 			if(skipElse || skipFollowing) {
@@ -1432,7 +1769,9 @@ public class Parser {
 			}
 			
 			if(needFixUp && !ErrorReporter.isError()) {
-				codeGenerator.fixUp(fixupLine, codeGenerator.getPc() - fixupLine);
+//				codeGenerator.fixUp(fixupLine, codeGenerator.getPc() - fixupLine);
+				codeGenerator.put("j", jump2End);
+				codeGenerator.put(jump2End + ":");
 			}
 			
 //			symboltable = symboltable.getOutterTable();
@@ -1458,6 +1797,13 @@ public class Parser {
 				currentSymboltableEntry.setAttribute(keyword.getAttribute());
 			}
 			return true;
+		} else if(isDerefIdentifier(keyword)) {
+			if(currentSymboltableEntry.getType().equals(CHARZ.tokenId))
+				return true;
+			else {
+				s.setSrcPointer(tmpSrcPointer2);
+				return false;
+			}
 		} else if(keyword instanceof Identifier) {
 			if(symboltable == null) {
 				symboltable = new Symboltable("main", null);
@@ -1505,8 +1851,8 @@ public class Parser {
 							currentSymboltableEntry = ste;
 						}
 					} else {
-						ste.setCategory("const");
-						ste.setNeedRefresh(true);
+//						ste.setCategory("const");
+//						ste.setNeedRefresh(true);
 						currentSymboltableEntry = ste;
 					}
 				}
@@ -1535,13 +1881,13 @@ public class Parser {
 			java.lang.String arg3 = null;
 			boolean arg2IsConst = false;
 			if(keyword instanceof SUM)
-				op = new java.lang.String("ADD");
+				op = new java.lang.String("add");
 			else if(keyword instanceof DIFF || keyword instanceof BIGGR || keyword instanceof SMALLR)
-				op = new java.lang.String("SUB");
+				op = new java.lang.String("sub");
 			else if(keyword instanceof PRODUKT)
-				op = new java.lang.String("MUL");
+				op = new java.lang.String("mul");
 			else if(keyword instanceof QUOSHUNT)
-				op = new java.lang.String("DIV");
+				op = new java.lang.String("div");
 			
 			if(symboltable == null) {
 				symboltable = new Symboltable("main", null);
@@ -1559,7 +1905,15 @@ public class Parser {
 				// store variable in register
 				if(currentSymboltableEntry.getCategory() != null && 
 						currentSymboltableEntry.getCategory().equals("reg")) {
-					arg2 = currentSymboltableEntry.getReg();
+					if(currentSymboltableEntry.getAttribute() == null || inFlowControl) {
+						arg2 = currentSymboltableEntry.getReg();
+					} else {
+						currentSymboltableEntry.setCategory("const");
+						// switch arguments if one of them is a constant
+						op = op + "i";
+						arg3 = currentSymboltableEntry.getAttribute();
+						arg2IsConst = true;
+					}
 				} else if(currentSymboltableEntry.getCategory() != null && 
 						currentSymboltableEntry.getCategory().equals("var")) {
 					// currentKeyword.getAddress() contains address - let's load it into a register
@@ -1571,7 +1925,7 @@ public class Parser {
 				} else if(currentSymboltableEntry.getCategory() != null && 
 						currentSymboltableEntry.getCategory().equals("const")) {
 					// switch arguments if one of them is a constant
-					op = op + "I";
+					op = op + "i";
 					arg3 = currentSymboltableEntry.getAttribute();
 					arg2IsConst = true;
 				} else {
@@ -1588,6 +1942,17 @@ public class Parser {
 			} else {
 				adjustSrcPointer();
 			}
+
+			// moving v1 to tmp-reg to avoid overriding after second numop
+			if(arg2 == null && arg3 != null && arg3.equals("$v1")) { 
+				java.lang.String reg = codeGenerator.getNextFreeTemporary();
+				codeGenerator.put("move", reg, arg3);
+				arg3 = reg;
+			} else if(arg3 == null && arg2 != null && arg2.equals("$v1")) {
+				java.lang.String reg = codeGenerator.getNextFreeTemporary();
+				codeGenerator.put("move", reg, arg2);
+				arg2 = reg;
+			}
 			
 			// ...and a second parameter
 			if(!isNumOp(s.lookupToken())) {
@@ -1597,6 +1962,10 @@ public class Parser {
 			// found a symbol?
 			if(!(currentSymboltableEntry == null || ErrorReporter.isError() == true)) {
 				
+				if(currentSymboltableEntry.getAttribute() != null && !inFlowControl) {
+					currentSymboltableEntry.setCategory("const");
+				}
+				
 				// store variable in register
 				if(currentSymboltableEntry.getCategory() != null && 
 						currentSymboltableEntry.getCategory().equals("reg")) {
@@ -1604,12 +1973,13 @@ public class Parser {
 					if(arg2IsConst) {
 						// when operation is '-' or '/', we cannot make use of the commutative law
 						// thus, load the number into a register
-						if(op.equals("SUBI") || op.equals("DIVI")) {
+						if(op.equals("subi") || op.equals("divi")) {
 							arg2 = codeGenerator.loadImmediately(arg3);
 							op = op.substring(0, op.length()-1);
 							arg2IsConst = false;
 						}
 					}
+					// if the first parameter is still a constant...
 					if(arg2IsConst) {
 						
 						arg2 = currentSymboltableEntry.getReg();
@@ -1620,15 +1990,19 @@ public class Parser {
 						codeGenerator.put(op, arg1, arg2, arg3);
 						
 						if(keyword instanceof BIGGR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0",  arg3);
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");							
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero",  arg3);
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", arg3);
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
+							codeGenerator.put(branchlabel + ":");
 						}
 					} else {
 						arg3 = currentSymboltableEntry.getReg();
@@ -1639,15 +2013,19 @@ public class Parser {
 						codeGenerator.put(op, arg1, arg2, arg3);
 						
 						if(keyword instanceof BIGGR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg3, "0");							
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg3, "0");
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
+							codeGenerator.put(branchlabel + ":");
 						}
 					}
 					
@@ -1658,7 +2036,7 @@ public class Parser {
 					if(arg2IsConst) {
 						// when operation is '-' or '/', we cannot make use of the commutative law
 						// thus, load the number into a register
-						if(op.equals("SUBI") || op.equals("DIVI")) {
+						if(op.equals("subi") || op.equals("divi")) {
 							arg2 = codeGenerator.loadImmediately(arg3);
 							op = op.substring(0, op.length()-1);
 							arg2IsConst = false;
@@ -1679,15 +2057,19 @@ public class Parser {
 						codeGenerator.put(op, arg1, arg2, arg3);
 						
 						if(keyword instanceof BIGGR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", arg3);
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");							
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", arg3);
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
+							codeGenerator.put(branchlabel + ":");
 						}
 					} else {
 						arg3 = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
@@ -1702,15 +2084,19 @@ public class Parser {
 						codeGenerator.put(op, arg1, arg2, arg3);
 						
 						if(keyword instanceof BIGGR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg3, "0");							
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");							
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg3, "0");
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
+							codeGenerator.put(branchlabel + ":");
 						}
 					}
 					
@@ -1719,7 +2105,7 @@ public class Parser {
 					
 					// if both arguments are constants, don't generate any code 
 					if(arg2IsConst) {
-						if(op.equals("ADDI")) {
+						if(op.equals("addi")) {
 							Integer arg1 = new Integer(arg3) + 
 								new Integer(currentSymboltableEntry.getAttribute());
 							
@@ -1729,7 +2115,7 @@ public class Parser {
 							currentSymboltableEntry.setCategory("const");
 							currentSymboltableEntry.setAttribute(arg1.toString());
 							
-						} else if(op.equals("SUBI")) {
+						} else if(op.equals("subi")) {
 							// the following is necessary to store the arg2 value for BIGGR/SMALLR comparison
 							arg2 = currentSymboltableEntry.getAttribute();
 							Integer arg1 = new Integer(arg3) - 
@@ -1741,7 +2127,7 @@ public class Parser {
 							currentSymboltableEntry.setCategory("const");
 							currentSymboltableEntry.setAttribute(arg1.toString());
 							
-						} else if(op.equals("DIVI")) {
+						} else if(op.equals("divi")) {
 							if(currentSymboltableEntry.getAttribute().equals("0")) {
 								ErrorReporter.markError("Divison by 0");
 							} else {
@@ -1755,7 +2141,7 @@ public class Parser {
 								currentSymboltableEntry.setAttribute(arg1.toString());
 								
 							}
-						} else if(op.equals("MULI")) {
+						} else if(op.equals("muli")) {
 							Integer arg1 = new Integer(arg3) * 
 								new Integer(currentSymboltableEntry.getAttribute());
 							
@@ -1780,9 +2166,9 @@ public class Parser {
 								currentSymboltableEntry.setAttribute(arg3);
 							}
 						}
-						currentSymboltableEntry.setNeedRefresh(true);
+//						currentSymboltableEntry.setNeedRefresh(true);
 					} else {
-						op = op + "I";
+						op = op + "i";
 						arg3 = currentSymboltableEntry.getAttribute();
 						
 						currentSymboltableEntry = symboltable.get("IT");
@@ -1791,15 +2177,19 @@ public class Parser {
 						codeGenerator.put(op, arg1, arg2, arg3);
 						
 						if(keyword instanceof BIGGR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", arg3);
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
+							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
-							codeGenerator.put("BGTZ", currentSymboltableEntry.getReg(), "3");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), arg2, "0");							
-							codeGenerator.put("J", "2");
-							codeGenerator.put("ADDI", currentSymboltableEntry.getReg(), "$r0", arg3);
+							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");							
+							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							codeGenerator.put("j", branchlabel);
+							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
+							codeGenerator.put(branchlabel + ":");
 						}
 					}
 				} else {
@@ -1820,6 +2210,19 @@ public class Parser {
 				currentSymboltableEntry.setAttribute(keyword.getAttribute());
 			}
 			return true;
+		} else if(isArrayAccess(keyword)) {
+			SymboltableEntry ste = symboltable.get(keyword.getAttribute());
+			if(ste.getType().equals(NUMBRZ.tokenId))
+				return true;
+			else 
+				return false;
+		}  else if(isDerefIdentifier(keyword)) {
+			if(currentSymboltableEntry.getType().equals(NUMBR.tokenId))
+				return true;
+			else {
+				s.setSrcPointer(tmpSrcPointer2);
+				return false;
+			}
 		} else if(isIdentifier(keyword)) {
 			if(symboltable == null) {
 				symboltable = new Symboltable("main", null);
@@ -1835,12 +2238,14 @@ public class Parser {
 				}
 				
 				if(!ErrorReporter.isError()) {
-					if(ste.getAttribute() == null) {
+//					if(ste.getAttribute() == null) {
 						// load variable if no value exists
 						java.lang.String reg;
 						if(ste.getCategory().equals("var")) {
 //							reg = codeGenerator.loadImmediately(0);
 							reg = codeGenerator.loadWord(ste.getAddress());
+							ste.setReg(reg);
+							ste.setCategory("reg");
 							loadStmt++;
 							/* determine whether the loaded variable is in 
 							 * lowest scope and add register address, 
@@ -1850,28 +2255,28 @@ public class Parser {
 							 * defined in an upper scope, loaded in a lower scope
 							 * and used in another lower scope as well.
 							 */
-							if(symboltable.isInScopeLevel(ste.getName())) {
-								ste.setReg(reg);
-								ste.setCategory("reg");
-								currentSymboltableEntry = ste;
-							} else {
+//							if(symboltable.isInScopeLevel(ste.getName())) {
+//								ste.setReg(reg);
+//								ste.setCategory("reg");
+//								currentSymboltableEntry = ste;
+//							} else {
 								// add symbol to current (lowest) scope
-								SymboltableEntry tmpSte = new SymboltableEntry();
-								tmpSte.setName(ste.getName());
-								tmpSte.setReg(reg);
-								tmpSte.setCategory("reg");
-								tmpSte.setType(ste.getType());
-								symboltable.put(tmpSte);
-								currentSymboltableEntry = tmpSte;
-							}
-						} else {
-							currentSymboltableEntry = ste;
+//								SymboltableEntry tmpSte = new SymboltableEntry();
+//								tmpSte.setName(ste.getName());
+//								tmpSte.setReg(reg);
+//								tmpSte.setCategory("reg");
+//								tmpSte.setType(ste.getType());
+//								symboltable.put(tmpSte);
+//								currentSymboltableEntry = tmpSte;
+//							}
+//						} else {
 						}
-					} else {
-						ste.setCategory("const");
-						ste.setNeedRefresh(true);
 						currentSymboltableEntry = ste;
-					}
+//						}
+//					} else {
+//						ste.setCategory("const");
+//						currentSymboltableEntry = ste;
+//					}
 				}
 			} else {
 				ErrorReporter.markError("Unkown variable " + keyword.getAttribute());
@@ -1950,38 +2355,119 @@ public class Parser {
 	}
 	
 	public boolean isVarAssign(Keyword keyword) throws ParseException {
-		if(isIdentifier(keyword)) {
+		boolean deref = isDerefIdentifier(keyword);
+		boolean arrayacc = false;
+		if(!deref)
+			arrayacc = isArrayAccess(keyword);
+		if(deref || arrayacc || isIdentifier(keyword)) {
 			if(symboltable == null) {
 				symboltable = new Symboltable("main", null);
 				System.out.println("THIS SHOULD NEVER HAPPEN");
 			}
 			
-			Keyword k = lookAhead();
-			if(k instanceof R) {
+			if(lookAhead() instanceof R) {
 				adjustSrcPointer();
-				if(!isOperation(s.lookupToken())) {
+				
+				SymboltableEntry ste;
+				if(deref || arrayacc) {
+					ste = currentSymboltableEntry;
+				} else {
+					ste = symboltable.get(((Identifier) keyword).getAttribute());
+				}
+				
+				Keyword k = s.lookupToken();
+				if(!isMemAlloc(k) && !isOperation(k)) {
 					ErrorReporter.markError("Expected value");
 				}
-				// TODO: check for type!!
-				SymboltableEntry ste = symboltable.get(((Identifier) keyword).getAttribute());
+				
+				if(currentSymboltableEntry == null) {
+					currentSymboltableEntry = symboltable.get("IT");
+				}
+				
 				if(ste == null)
 					ErrorReporter.markError("Unknown variable " + ((Identifier) keyword).getAttribute());
-//				currentSymboltableEntry = ste;
 				if(ste != null) {
-					if(currentSymboltableEntry.getCategory().equals("const")) {
-						if(currentSymboltableEntry.getAttribute() != null)
-							ste.setAttribute(currentSymboltableEntry.getAttribute());
-						if(currentSymboltableEntry.getType() != null)
-							ste.setType(currentSymboltableEntry.getType());
-						if(!ste.getCategory().equals("const")) {
-							ste.setNeedRefresh(true);
+					if(ste.getType().equals(NOOB.tokenId) || 
+							ste.getType().equals(currentSymboltableEntry.getType()) ||
+							currentSymboltableEntry.getName().equals("IT")) {
+					
+						if(ste.getCategory().equals("var")) {
+							// load variable
+							java.lang.String reg = codeGenerator.
+								loadWord(ste.getAddress());
+							ste.setCategory("reg");
+							ste.setReg(reg);
 						}
-					} else if(currentSymboltableEntry.getName().equals("IT") && 
-							ste.getCategory().equals("reg")) {
-						codeGenerator.put("MOVE", ste.getReg(), currentSymboltableEntry.getReg());
+						
+						if(ste.getCategory().equals("heap")) {
+							// loads address of heap-label
+							java.lang.String reg = codeGenerator.
+								loadAddress(ste.getHeap());
+							// loads the address of the heap start by loading the value behind the address of the heap-level
+							codeGenerator.put("lw", reg, "("+reg+")");
+							// load start address
+							ste.setCategory("reg");
+							ste.setReg(reg);
+						}
+						
+						if(currentSymboltableEntry.getCategory().equals("const")) {
+							if(currentSymboltableEntry.getAttribute() != null)
+								ste.setAttribute(currentSymboltableEntry.getAttribute());
+							else
+								ste.setAttribute("0");
+							if(currentSymboltableEntry.getType() != null)
+								ste.setType(currentSymboltableEntry.getType());
+							
+							if(ste.getType().equals(NUMBR.tokenId) || 
+									ste.getType().equals(TROOF.tokenId) ||
+									ste.getType().equals(CHAR.tokenId)) {
+								codeGenerator.put("addi", ste.getReg(), "$zero", ste.getAttribute());
+								if(ste.getName().equals("IT")) {
+									ste.setAttribute(null);
+								}
+							} else if(ste.getType().equals(CHARZ.tokenId)) {
+								StringLib.init(codeGenerator, memoryManager);
+								StringLib.storeString(ste);
+							}
+							
+						} else if(currentSymboltableEntry.getCategory().equals("heap") || 
+								currentSymboltableEntry.getCategory().equals("var")) {
+							if(currentSymboltableEntry.getCategory().equals("var") && currentSymboltableEntry.getReg() == null) {
+								java.lang.String reg = codeGenerator.loadWord(currentSymboltableEntry.getAddress());
+								currentSymboltableEntry.setReg(reg);
+								ste.setAddress(currentSymboltableEntry.getAddress());
+							} else if(currentSymboltableEntry.getCategory().equals("heap") && currentSymboltableEntry.getReg() == null) {
+								java.lang.String reg = codeGenerator.loadAddress(currentSymboltableEntry.getHeap());
+								currentSymboltableEntry.setReg(reg);
+								ste.setHeap(currentSymboltableEntry.getHeap());
+							}
+							codeGenerator.put("move", ste.getReg(), 
+									currentSymboltableEntry.getReg());
+							if(currentSymboltableEntry.getType() != null)
+								ste.setType(currentSymboltableEntry.getType());
+							ste.setCategory("reg");
+						} else if(currentSymboltableEntry.getCategory().equals("reg")) {
+							codeGenerator.put("move", ste.getReg(), 
+									currentSymboltableEntry.getReg());
+						} 
+						// if we got a dynamic type, we also have to store it on the heap
+						if(ste.getName().equals("IT") &&
+								ste.getAddress() != null) {
+							if(ste.getHeap() != null) {
+								// TODO: continue here!!!
+								java.lang.String reg = codeGenerator.loadAddress(ste.getHeap());
+								currentSymboltableEntry.setReg(reg);
+								codeGenerator.put("move", ste.getReg(), 
+										currentSymboltableEntry.getReg());
+							}
+							codeGenerator.put("sw", 
+									ste.getReg(), 
+									"(" + ste.getAddress() + ")");
+							ste.setAddress(null);
+						}
 					}
-					currentSymboltableEntry = ste;
 				}
+//				currentSymboltableEntry = ste;
 				return true;
 			} else {
 				ErrorReporter.markError("Missing 'R' or 'IS NOW A' keywords after variable");
@@ -1992,10 +2478,39 @@ public class Parser {
 		}
 	}
 	
+	public boolean isMemAlloc(Keyword keyword) {
+		if(keyword instanceof DOWANT) {
+			Keyword lookahead = lookAhead();
+			if(symboltable.existsType(lookahead.getAttribute())) {
+				adjustSrcPointer();
+				TypeItem type = symboltable.getType(lookahead.getAttribute());
+				int heap_id = memoryManager.allocateMemory(type.getSize());
+				java.lang.String heap_label = "hp" + new Integer(heap_id).toString();
+				SymboltableEntry ste = new SymboltableEntry();
+				ste.setHeap(heap_label);
+				ste.setCategory("heap");
+				ste.setType(type.getName());
+				currentSymboltableEntry = ste;
+			} else {
+				ErrorReporter.markError("Type " + lookahead.getAttribute() + " does not exist");
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	
 	private boolean checkTypeConversions(java.lang.String lastType, Keyword newType, Identifier identifier) {
 		TypeConversion.init(codeGenerator, symboltable, memoryManager);
 		if(isType(newType)) {
+			// IT can always be re-typed - leave responsibility 
+			// of type conversions to the programmer
+			if(identifier.getAttribute().equals("IT")) {
+				SymboltableEntry ste = symboltable.get("IT");
+				ste.setType(newType.getTokenID());
+				return true;
+			}
 			if(lastType == null) lastType = NOOB.tokenId;
 			if(!lastType.equals(NOOB.tokenId)) {
 				// change type of identifier from integer to...
@@ -2326,10 +2841,12 @@ public class Parser {
 				} 
 				// ... a string
 				else if(newType.getTokenID().equals(CHARZ.tokenId)) {
-					if(!isNum(lookAhead())) {
+					Keyword lookahead = lookAhead();
+					if(!isNum(lookahead)) {
 						ErrorReporter.markError("Missing size of char array");
 					} else {
-						int arraySize = new Integer(lookAhead().getAttribute());
+						adjustSrcPointer();
+						int arraySize = new Integer(lookahead.getAttribute());
 						TypeConversion.null2string(identifier, arraySize);
 					}
 				} else {
@@ -2418,7 +2935,176 @@ public class Parser {
 	}
 
 	public boolean isIdentifier(Keyword keyword) {
-		return keyword instanceof Identifier;
+		return (keyword instanceof Identifier);
+	}
+	
+	/**
+	 * Checks whether identifier is followed by a .
+	 * This is only the case if identifier is of type 'array'
+	 * @param keyword
+	 * @return
+	 */
+	public boolean isArrayAccess(Keyword keyword) {
+		if(isIdentifier(keyword)) {
+			if(lookAhead() instanceof ArrayAccessOp) {
+				// left_hand is the symboltable entry for the array or record
+				SymboltableEntry left_hand = symboltable.get(keyword.getAttribute());
+				
+				if(!(left_hand.getType().equals(NUMBRZ.tokenId) || 
+						left_hand.getType().equals(CHARZ.tokenId) || 
+						left_hand.getType().equals(TROOFZ.tokenId))) {
+					ErrorReporter.markError("Array access on non-array type");
+				}
+				
+				adjustSrcPointer();
+				Keyword k = s.lookupToken();
+				boolean arrayAccess = isArrayAccess(k);
+				if(arrayAccess || isIdentifier(k)) {
+					// 1. load base address of array into register
+					// here we load the base address of the array or record
+					if(left_hand.getCategory().equals("heap")) {
+						java.lang.String reg = codeGenerator.getNextFreeTemporary();
+						codeGenerator.put("la", reg, left_hand.getHeap());
+						left_hand.setReg(reg);
+					} else if(left_hand.getCategory().equals("var")) {
+						java.lang.String reg = codeGenerator.getNextFreeTemporary();
+						codeGenerator.put("lw", reg, "("+left_hand.getAddress()+")");
+						left_hand.setReg(reg);
+					} 
+					// right_hand is the symboltable entry for the "right hand side" of the deref operator
+					SymboltableEntry right_hand;
+					
+					if(arrayAccess) {
+						// ... thus either the result of another deref operation, 
+						// which is stored in currentSymboltaleEntry
+						right_hand = currentSymboltableEntry;
+						// furthermore, we have to load the value of v1 
+						// (which should be an address at that time) into v1
+						java.lang.String tmp = codeGenerator.getNextFreeTemporary();
+						codeGenerator.put("lw", "$v1", "(" + tmp + ")");
+					} else {
+						// ... or the symboltable entry for the identifier 
+						right_hand = symboltable.get(k.getAttribute());
+					}
+					// keyword is an array
+					// 3. Calculate offset and add it to the base address
+					if(right_hand.getCategory().equals("const")) {
+						Integer val = new Integer(right_hand.getAttribute()) * 4;
+						java.lang.String offset = val.toString();
+						// adding the offset directly to the left_hand address 
+						// and store it in currentSymboltable-Reg v1
+						codeGenerator.put("addi", "$v1", left_hand.getReg(), offset);
+					} else {
+						if(right_hand.getCategory().equals("var")) {
+							java.lang.String reg = codeGenerator.loadWord(right_hand.getAddress());
+							right_hand.setReg(reg);
+							right_hand.setCategory("reg");
+						}
+						// calculating array start + offset 
+						// and store it in currentSymboltable-Reg v1
+						codeGenerator.put("muli", right_hand.getReg(), right_hand.getReg(), "4");
+						codeGenerator.put("add", "$v1", left_hand.getReg(), right_hand.getReg());
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks whether identifier is followed by a ->
+	 * This is only the case if identifier is of a dynamic type.
+	 * The difference to ArrayAccess is, that it is evaluated from
+	 * left to right, i.e if we access the struct s1 of type Stuff, 
+	 * which contains an integer 'id' and a 'next' pointer to the 
+	 * next Stuff s2, and we want to evaluate s1->s2->id, then
+	 * we would evaluate (s1->s2)->id.
+	 * If we would have arrays instead, i.e a1.a2.id, we would
+	 * evaluate a1.(a2.id).
+	 * @param keyword
+	 * @return
+	 */
+	public boolean isDerefIdentifier(Keyword keyword) {
+		if(isIdentifier(keyword)) {
+			if(lookAhead() instanceof DerefOperator) {
+				// left_hand is the symboltable entry for the array or record
+				SymboltableEntry left_hand = symboltable.get(keyword.getAttribute());
+				
+				// 1. load base address of record into register
+				if(left_hand.getCategory().equals("heap")) {
+					java.lang.String reg = codeGenerator.getNextFreeTemporary();
+					codeGenerator.put("la", reg, left_hand.getHeap());
+					left_hand.setReg(reg);
+				} else if(left_hand.getCategory().equals("var")) {
+					java.lang.String reg = codeGenerator.getNextFreeTemporary();
+					codeGenerator.put("lw", reg, left_hand.getAddress());
+					left_hand.setReg(reg);
+				}
+				
+				tmpSrcPointer2 = s.getPointerBeforeToken();
+				while(lookAhead() instanceof DerefOperator) {
+					
+					if(!symboltable.existsType(left_hand.getType())) {
+						ErrorReporter.markError("Left hand of deref-operator " +
+								"is not known as a dynamic type");
+					}
+					
+					adjustSrcPointer();
+					Keyword k = s.lookupToken();
+					
+					if(isIdentifier(k)) {
+						
+						// keyword is a dynamic type
+						// the difference to an array is that the right-hand part is not an index, but
+						// the struct property name
+						// 2. at this state, we have loaded the base address of the record, 
+						//    now lets calculate the offset for our address.
+						//    The offset is already stored in the global label '<struct_label>.<right_hand_keyword>'
+						Symboltable tmpsymboltable = symboltable;
+						TypeItem structType = symboltable.getType(left_hand.getType());
+						symboltable = structType.getSymbolTable();
+						if(!symboltable.exists(k.getAttribute())) {
+							ErrorReporter.markError("The right-hand-side is not a structure property");
+							return true;
+						} else {
+							// right_hand is the symboltable entry for the "right hand side" of the deref operator
+							SymboltableEntry right_hand = symboltable.get(k.getAttribute());
+							
+							java.lang.String tmpReg1 = codeGenerator.getNextFreeTemporary();
+							java.lang.String tmpReg2 = codeGenerator.getNextFreeTemporary();
+							codeGenerator.put("la", tmpReg1, right_hand.getAddress());
+							codeGenerator.put("lw", tmpReg1, "(" + tmpReg1 + ")");
+							// calculating record base + offset 
+							// and store it in currentSymboltable-Reg v1
+							codeGenerator.put("add", "$v1", left_hand.getReg(), tmpReg1);
+							// loading address of calculated position
+							codeGenerator.put("lw", "$v1", "($v1)");
+							codeGenerator.put("move", tmpReg2, "$v1");
+//							if(right_hand.getType().equals(NUMBR.tokenId) || 
+//									right_hand.getType().equals(CHAR.tokenId) || 
+//									right_hand.getType().equals(TROOF.tokenId) ) {
+								// loading value of address of calculated position
+								codeGenerator.put("lw", "$v1", "($v1)");
+//							}
+							currentSymboltableEntry = symboltable.get("IT");
+							// set type to right hand symbol type
+							currentSymboltableEntry.setType(right_hand.getType());
+							// TODO: missusing address field here. Not sure about the consequences, 
+							//       but I need something to temporary store the address-register
+							//       to be able to save the value later. (in isVarAssign())
+							currentSymboltableEntry.setAddress(tmpReg2);
+							codeGenerator.releaseRegister(tmpReg1);
+						}
+						symboltable = tmpsymboltable;
+						left_hand = currentSymboltableEntry;
+					} else {
+						ErrorReporter.markError("Expected identifier after dereference operator");
+					}
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public boolean isFunction(Keyword keyword) throws ParseException {
@@ -2448,21 +3134,22 @@ public class Parser {
 			// if the caller function was the main function, we store the
 			// content of the caller-symboltable in the $s-registers 
 			// (as long as there is enough space)
-			if(!tmpSymboltable.getName().equals("main")) {
-				// save $s0 - $s7
-				for(java.lang.String var : symboltable.getHashEntry().keySet()) {
-					SymboltableEntry ste = symboltable.get(var);
-					// TODO ...
-				}
-			}
-			symboltable = new Symboltable(funcId.getAttribute(), symboltable.getGlobalTable());
 			
-			codeGenerator.put(funcId.getAttribute(), ": ");
+			codeGenerator.put(funcId.getAttribute() + ": ");
+			
+			
+			
 			// fp := sp
 			codeGenerator.setFPisSP();
 			
+			int lastLvl = tmpSymboltable.getGlobalTable().getLevel();
+			symboltable = new Symboltable(funcId.getAttribute(), tmpSymboltable.getGlobalTable());
+			symboltable.setLevel(lastLvl+1);
+			
+			codeGenerator.cleanUpTemporaries();
+			
 			Keyword tok = lookAhead();
-			ArrayList<java.lang.String> argTypes = new ArrayList<java.lang.String>();
+			StringBuilder argTypes = new StringBuilder();
 			if(tok instanceof YR) {
 				adjustSrcPointer();
 
@@ -2479,7 +3166,8 @@ public class Parser {
 					
 				} else {
 					adjustSrcPointer();
-					argTypes.add(type.getTokenID());
+					argTypes.append(" ");
+					argTypes.append(type.getTokenID());
 					Keyword argument = lookAhead();
 					if(!(lookAhead() instanceof Identifier)) {
 						ErrorReporter.markError("Expected another argument");
@@ -2487,8 +3175,10 @@ public class Parser {
 						adjustSrcPointer();
 					}
 					
+					java.lang.String tempreg = codeGenerator.getNextFreeTemporary();
+					codeGenerator.put("move", tempreg, "$a0");
 					SymboltableEntry symboltableEntry = new SymboltableEntry();
-					symboltableEntry.setReg("$a0");
+					symboltableEntry.setReg(tempreg);
 					symboltableEntry.setCategory("reg");
 					symboltableEntry.setName(argument.getAttribute());
 					symboltableEntry.setType(type.getTokenID());
@@ -2515,7 +3205,8 @@ public class Parser {
 						
 					} else {
 						adjustSrcPointer();
-						argTypes.add(nextType.getTokenID());
+						argTypes.append(" ");
+						argTypes.append(type.getTokenID());
 						Keyword argumentNext = lookAhead();
 						if(!(argumentNext instanceof Identifier)) {
 							ErrorReporter.markError("Expected another argument");
@@ -2524,8 +3215,10 @@ public class Parser {
 						}
 						
 						if(argCount < 4) {
+							java.lang.String tempreg = codeGenerator.getNextFreeTemporary();
+							codeGenerator.put("move", tempreg, "$a" + new Integer(argCount).toString());
 							SymboltableEntry symboltableEntry = new SymboltableEntry();
-							symboltableEntry.setReg("$a" + new Integer(argCount).toString());
+							symboltableEntry.setReg(tempreg);
 							symboltableEntry.setCategory("reg");
 							symboltableEntry.setName(argumentNext.getAttribute());
 							symboltableEntry.setType(nextType.getTokenID());
@@ -2538,10 +3231,7 @@ public class Parser {
 				}
 			}
 			
-			FunctionItem functionItem = new FunctionItem();
-			functionItem.setFunctionName(funcId.getAttribute());
-			functionItem.setArgumentTypes(argTypes);
-			functionAccessManager.addFunctionDefinition(functionItem);
+			codeGenerator.getFunctionDefs().add(funcId.getAttribute() + argTypes);
 			
 			adjustSrcPointer();
 			while(!(tok instanceof IF)) {
@@ -2563,13 +3253,50 @@ public class Parser {
 					if(currentSymboltableEntry == null) {
 						currentSymboltableEntry = symboltable.get("IT");
 					}
-					// stores return value in $v0/$v1
-					codeGenerator.move2Return(currentSymboltableEntry.getReg());
+					// stores return value in $v1
+					if(currentSymboltableEntry.getCategory().equals("const")) {
+						if(currentSymboltableEntry.getType().equals(NUMBR.tokenId) || 
+								currentSymboltableEntry.getType().equals(CHAR.tokenId))
+							codeGenerator.put("addi", "$v1", "$zero", currentSymboltableEntry.getAttribute());
+						else if(currentSymboltableEntry.getType().equals(CHARZ.tokenId)) {
+							StringLib.init(codeGenerator, memoryManager);
+							StringLib.storeString(currentSymboltableEntry);
+							codeGenerator.put("la", "$v1", currentSymboltableEntry.getHeap());
+							currentSymboltableEntry.setReg("$v1");
+							currentSymboltableEntry.setCategory("reg");
+						}
+					} else if(currentSymboltableEntry.getCategory().equals("var")) {
+						codeGenerator.put("lw", "$v1", currentSymboltableEntry.getAddress() + "($fp)");
+					} else {
+						codeGenerator.move2Return(currentSymboltableEntry.getReg());
+					}
 					// set the fp back: sp := fp
 					codeGenerator.setSPisFP();
-					// returns to previous address
+					
+//					// restore frame pointer
+//					codeGenerator.put("move", "$fp", "$s6");
+//					// restore return address
+//					codeGenerator.put("move", "$ra", "$s7");
+//					
+//					/* move stack-content back to saver register */
+//					for(java.lang.String savereg : saveRegister.keySet()) {
+//						java.lang.String address = saveRegister.get(savereg);
+//						codeGenerator.put("lw", savereg, address + "($fp)");
+//					}
+//					
+//					/* move save register back to temp register */
+//					for(java.lang.String treg : tmpRegister.keySet()) {
+//						SymboltableEntry ste = tmpRegister.get(treg);
+//						// treg = ste.getReg
+//						codeGenerator.put("move", treg, ste.getReg());
+//					}
+					
+					// returns to previous address					
 					codeGenerator.put("jr", "$ra");
 				} else if(tok instanceof GTFO) {
+					// set the fp back: sp := fp
+					codeGenerator.setSPisFP();
+					
 					// returns to previous address
 					codeGenerator.put("jr", "$ra");
 				}
@@ -2593,9 +3320,12 @@ public class Parser {
 			} else {
 				adjustSrcPointer();
 			}
-
+			
+			
 			// set the fp back: sp := fp
 			codeGenerator.setSPisFP();
+			
+			
 			codeGenerator.put("jr", "$ra");
 			symboltable = tmpSymboltable;
 			
@@ -2618,56 +3348,98 @@ public class Parser {
 		s.setSrcPointer(tmpSrcPointer);
 	}
 
-	public void parse() throws ParseException {
-		s = new Scanner("" +
-				"CAN HAS fileId " +
-				"HAI " +
-				"I HAS A var1 " +
-				"I HAS A var2 " +
-				"var1 IS NOW A NUMBR " +
-				"var2 IS NOW A NUMBR " +
-				"var1 R 3 " +
-				"var2 R 2 " +
-				"SUM OF var1 AN var2 " +
-				"KTHXBYE");
-
-		isProgram(s.lookupToken());
-	}
-	
+	/**
+	 * This method triggers the whole parsing process
+	 * @param filename
+	 */
 	public static void loadSourcecode(java.lang.String filename) {
 		if(filename != null) {
 			Parser p = new Parser(filename);
-			try {
-		
-				File mainFile = new File(filename);
-				java.util.Scanner filescanner = new java.util.Scanner(mainFile);
-				StringBuilder stringBuilder = new StringBuilder();
-				while(filescanner.hasNextLine()) {
-					stringBuilder.append(filescanner.nextLine() + "\n");
+			StringBuilder sb = new StringBuilder();
+			if(filename.startsWith("/"))
+				sb.append("/");
+			java.lang.String[] path_split = filename.split("/");
+			int index = 0;
+			for(int i=0; i<path_split.length-1; i++) {
+				 sb.append(path_split[i]);
+				 sb.append("/");
+				 index = i+1;
+			}
+			p.currentPath = sb.toString();
+			p.currentModule = path_split[index];
+			
+			boolean needsCompilation = false;
+			File mainFile = new File(filename);
+			File mainFileCat = new File(filename.replace(".lol", ".cat"));
+			if(mainFileCat.canRead()) {
+				try {
+					java.lang.String timestamp;
+					java.util.Scanner filescanner = new java.util.Scanner(mainFileCat);
+					if(filescanner.hasNextLine()) {
+						timestamp = filescanner.nextLine().substring(1);
+						
+						if(!timestamp.equals(mainFile.lastModified())) {
+							needsCompilation = true;
+						}
+					} else {
+						needsCompilation = true;
+					}
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
 				}
-				p.s = new Scanner(stringBuilder.toString());
-				Assert.assertTrue(p.isProgram(p.s.lookupToken()));
-//				char[] buf = new char[200000];
-//				int nc = 0;
-//				if((nc = reader.read(buf)) != -1) {
-//					stringBuilder.append(buf);
-//					java.lang.String toParse = 
-//						stringBuilder.toString().substring(0, nc);
-//					p.s = new Scanner(toParse);
-//					Assert.assertTrue(p.isProgram(p.s.lookupToken()));
-//				}
-			} catch (ParseException e) {
-				e.printStackTrace();
-				fail();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+			} else {
+				needsCompilation = true;
+			}
+			
+			if(needsCompilation) {
+				mainFile.setLastModified(System.currentTimeMillis());
+				p.codeGenerator.setModuleTimestamp(new Long(mainFile.lastModified()).toString());
+				try {
+					java.util.Scanner filescanner = new java.util.Scanner(mainFile);
+					StringBuilder stringBuilder = new StringBuilder();
+					while(filescanner.hasNextLine()) {
+						stringBuilder.append(filescanner.nextLine() + "\n");
+					}
+					p.s = new Scanner(stringBuilder.toString());
+					p.isProgram(p.s.lookupToken());
+					p.codeGenerator.finalizeCG();
+					if(!ErrorReporter.isError()) {
+						System.out.println("Build Successfully.");
+					}
+				} catch (ParseException e) {
+					e.printStackTrace();
+				} catch (FileNotFoundException e) {
+					ErrorReporter.markError("File " + filename + " not found :(");
+				}
 			}
 		}
 	}
-
+	
 	public static void main(java.lang.String[] args) {
 		if(args[0] != null) {
-			Parser.loadSourcecode(args[0]);
+			
+			if(args[1] != null && args[1].equals("-s")) {
+				Parser.separateCompile = true;
+			} else {
+				Parser.separateCompile = false;
+			}
+			// -l = link only
+			if(args[1] != null && args.equals("-l")) {
+				Set<java.lang.String> sources = new HashSet<java.lang.String>();
+				for(int i=2; i<args.length; i++) {
+					sources.add(args[i]);
+				}
+				Linker.destination = "/home/sstroka/Desktop/main.asm";
+				Linker.linkSources(sources);
+			} else {
+				Parser.loadSourcecode(args[0]);
+				// link only if we do not want to just compile one file
+				// we then need to manually link the sources
+				if(!Parser.separateCompile) {
+					Linker.destination = "/home/sstroka/Desktop/main.asm";
+					Linker.linkSources(Parser.modules);
+				}
+			}
 		}
 	}
 }

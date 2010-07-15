@@ -19,12 +19,10 @@ public class ParserTest {
 		p.parseTest = true;
 		Scanner s = new Scanner("" +
 				"STUFF label \n" +
-				"I HAS A var1 \n" +
-				"I HAS A var2 \n" +
-				"var1 IS NOW A NUMBR \n" +
-				"var2 IS NOW A NUMBR \n" +
-				"var1 R 3 \n" +
-				"var2 R 2 \n" +
+				"    I HAS A var1 \n" +
+				"    I HAS A var2 \n" +
+				"    var1 IS NOW A NUMBR \n" +
+				"    var2 IS NOW A NUMBR \n" +
 				"THATSIT");
 		p.s = s;
 		ErrorReporter.setS(s);
@@ -48,7 +46,9 @@ public class ParserTest {
 		ErrorReporter.setS(s);
 		try {
 			Assert.assertTrue(p.isModuleImport(p.s.lookupToken()));
-			Assert.assertTrue(!ErrorReporter.isError());
+			
+			// expecting file not found error
+			Assert.assertTrue(ErrorReporter.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -85,8 +85,6 @@ public class ParserTest {
 				"    I HAS A var2 \n" +
 				"    var1 IS NOW A NUMBR \n" +
 				"    var2 IS NOW A NUMBR \n" +
-				"    var1 R 3 \n" +
-				"    var2 R 2 \n" +
 				"THATSIT \n" +
 				"HAI \n" +
 				"    I HAS A var1 \n" +
@@ -106,7 +104,9 @@ public class ParserTest {
 		ErrorReporter.setS(s);
 		try {
 			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
-			Assert.assertTrue(!ErrorReporter.isError());
+			
+			// expecting file not found error
+			Assert.assertTrue(ErrorReporter.isError());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();
@@ -134,7 +134,7 @@ public class ParserTest {
 				"    I HAS A var2 \n" +
 				"    var1 IS NOW A NUMBR \n" +
 				"    var2 IS NOW A NUMBR \n" +
-				"    var1 3 \n" +
+				"    var1 R 3 \n" +
 				"    var2 R 2 \n" +
 				"    SUM OF var1 var2 \n" +
 				"    PRODUKT OF var2 AN var1 \n" +
@@ -223,7 +223,7 @@ public class ParserTest {
 		ErrorReporter.setError(false);
 		Parser p = new Parser();
 		p.parseTest = true;
-		Scanner s = new Scanner("CALL function1");
+		Scanner s = new Scanner("CAN U function1 ?");
 		p.s = s;
 		ErrorReporter.setS(s);
 		try {
@@ -240,7 +240,7 @@ public class ParserTest {
 		ErrorReporter.setError(false);
 		Parser p = new Parser();
 		p.parseTest = true;
-		Scanner s = new Scanner("CALL function1 var1 2 \"str\"");
+		Scanner s = new Scanner("CAN U function1 var1 2 \"str\" ?");
 		p.s = s;
 		ErrorReporter.setS(s);
 		try {
@@ -257,7 +257,7 @@ public class ParserTest {
 		ErrorReporter.setError(false);
 		Parser p = new Parser();
 		p.parseTest = true;
-		Scanner s = new Scanner("CALL function1 var1 SUM OF 2 AN 3");
+		Scanner s = new Scanner("CAN U function1 var1 SUM OF 2 AN 3 ?");
 		p.s = s;
 		ErrorReporter.setS(s);
 		try {
@@ -1369,6 +1369,32 @@ public class ParserTest {
 		try {
 			Assert.assertTrue(p.isFunction(p.s.lookupToken()));
 			Assert.assertTrue(ErrorReporter.isError());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testNumArrayDeref() {
+		ErrorReporter.setError(false);
+		Parser p = new Parser();
+		p.parseTest = true;
+		Scanner s = new Scanner("" +
+				"HAI \n" +
+				"    I HAS A var1 \n" +
+				"    I HAS A var2 \n" +
+				"    var1 IS NOW A NUMBRZ 5\n" +
+				"    var2 IS NOW A NUMBR \n" +
+				"    var2 R 2 \n" +
+				"    var1.var2 R 5 \n" +
+				"KTHXBYE \n");
+		p.s = s;
+		ErrorReporter.setS(s);
+		try {
+			Assert.assertTrue(p.isProgram(p.s.lookupToken()));
+			Assert.assertTrue(!ErrorReporter.isError());
+			System.out.println("-----------------------------------------");
 		} catch (ParseException e) {
 			e.printStackTrace();
 			fail();

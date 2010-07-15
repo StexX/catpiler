@@ -1,11 +1,11 @@
 package catpiler.frontend.scanner.keywords;
 
-public class DerefOperator extends Keyword {
+public class ArrayAccessOp extends Keyword {
 
 	// unused
 	private java.lang.String attribute;
 	
-	public final static java.lang.String tokenId = "->";
+	public final static java.lang.String tokenId = ".";
 	
 	@Override
 	public java.lang.String getAttribute() {
@@ -14,12 +14,11 @@ public class DerefOperator extends Keyword {
 
 	@Override
 	public java.lang.String getTokenID() {
-		return DerefOperator.tokenId;
+		return ArrayAccessOp.tokenId;
 	}
 
 	@Override
 	public void setAttribute(java.lang.String attribute) {
 		this.attribute = attribute;
 	}
-
 }

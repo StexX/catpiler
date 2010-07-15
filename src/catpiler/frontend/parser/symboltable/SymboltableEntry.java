@@ -19,10 +19,7 @@ public class SymboltableEntry {
 	
 	private String reg;
 	
-	private boolean needRefresh = false;
-	
-	private boolean needLoad = false;
-	
+	private int level;
 	
 	public String getName() {
 		return name;
@@ -72,22 +69,6 @@ public class SymboltableEntry {
 		this.reg = reg;
 	}
 
-	public boolean isNeedRefresh() {
-		return needRefresh;
-	}
-
-	public void setNeedRefresh(boolean needRefresh) {
-		this.needRefresh = needRefresh;
-	}
-
-	public boolean isNeedLoad() {
-		return needLoad;
-	}
-
-	public void setNeedLoad(boolean needLoad) {
-		this.needLoad = needLoad;
-	}
-
 	public String getHeap() {
 		return heap;
 	}
@@ -104,4 +85,13 @@ public class SymboltableEntry {
 		this.heapsize = heapsize;
 	}
 
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+	
 }

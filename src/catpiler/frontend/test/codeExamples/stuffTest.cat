@@ -1,5 +1,5 @@
 #1279222504000
-#printString CHARZ,
+#
 #
 .data
 hp0: .space 4
@@ -17,6 +17,8 @@ hp11: .space 4
 hp12: .space 4
 hp13: .space 4
 hp14: .space 4
+SomeStuff.var1: .word 0
+SomeStuff: .byte 4
 .text
 #begin_mm
 addi $v0 $zero 9
@@ -99,55 +101,31 @@ main:
 add $fp $zero $sp
 subu $sp $sp 4
 lw $t0 0($fp)
-la $t0 hp0
-lw $t0 ($t0)
 la $t1 hp0
-lw $t1 ($t1)
-la $t2 hp0
+move $t0 $t1
+la $t2 SomeStuff.var1
 lw $t2 ($t2)
-addi $t3 $zero 72
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 101
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 111
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 32
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 87
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 111
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 114
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 108
-sb $t3 ($t2)
-addi $t2 $t2 1
-addi $t3 $zero 100
-sb $t3 ($t2)
-addi $t2 $t2 1
-sb $zero ($t2)
-la $t4 hp0
-move $a0 $t4
-move $s0 $t1
-move $s7 $ra
-move $s6 $fp
-jal printString
-move $fp $s6
-move $ra $s7
-move $t1 $s0
+add $v1 $t0 $t2
+lw $v1 ($v1)
+move $t3 $v1
+lw $v1 ($v1)
+addi $v1 $zero 3
+sw $v1 ($t3)
+la $t4 SomeStuff.var1
+lw $t4 ($t4)
+add $v1 $t0 $t4
+lw $v1 ($v1)
+move $t5 $v1
+lw $v1 ($v1)
+la $t6 SomeStuff.var1
+lw $t6 ($t6)
+add $v1 $t0 $t6
+lw $v1 ($v1)
+move $t7 $v1
+lw $v1 ($v1)
+addi $v0 $zero 1
+move $a0 $v1
+syscall
 add $sp $zero $fp
 addi $v0 $zero 10
 syscall

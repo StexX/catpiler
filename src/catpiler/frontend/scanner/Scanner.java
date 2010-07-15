@@ -22,6 +22,7 @@ import org.junit.Assert;
 
 import catpiler.frontend.exception.NoTokenFoundException;
 import catpiler.frontend.exception.SyntaxException;
+import catpiler.frontend.scanner.keywords.ArrayAccessOp;
 import catpiler.frontend.scanner.keywords.BTW;
 import catpiler.frontend.scanner.keywords.DerefOperator;
 import catpiler.frontend.scanner.keywords.Identifier;
@@ -69,6 +70,8 @@ public class Scanner {
 	
 	private int lineCount;
 	
+	private boolean silent = false;
+	
 	/**
 	 * Initializes the Scanner variables
 	 * @param input
@@ -112,18 +115,20 @@ public class Scanner {
 		try {
 			
 			t = tService.returnFirstMatchinToken(current_token, token_pointer);
-			if(readWhiteSpace() || readEOS()) {
+			if(!(t instanceof catpiler.frontend.scanner.keywords.String) && (readWhiteSpace() || readEOS())) {
 				token_pointer++;
 				current_token[token_pointer] = '\0';
 			} else {
-				if(!(t instanceof DerefOperator))
+				if(!(t instanceof DerefOperator || t instanceof ArrayAccessOp))
+					readNextChar();
+				else if(t instanceof DerefOperator)
 					readNextChar();
 			}
 			
 			while(t != null &&
 					!(current_token[token_pointer] == '\0' && token_pointer == t.getTokenID().length()) &&
 					!((t instanceof catpiler.frontend.scanner.keywords.String) 
-						|| (t instanceof Int) || (t instanceof DerefOperator))) {
+						|| (t instanceof Int) || (t instanceof DerefOperator) || (t instanceof ArrayAccessOp))) {
 				// if the next char is a whitespace, finalize current_token
 				// and loop up token that exactly matches the current_token 
 				// char array
@@ -171,7 +176,7 @@ public class Scanner {
 				//fail
 				fail = true;
 			}
-			while(!(readWhiteSpace() || readEOS() || readDerefOp())) {
+			while(!(readWhiteSpace() || readEOS() || readDerefOp() || readArrayAccOp())) {
 				readNextChar();
 				if(!(current_token[token_pointer] >= 'A' && current_token[token_pointer] <= 'Z' || 
 						current_token[token_pointer] >= 'a' && current_token[token_pointer] <= 'z' ||
@@ -184,8 +189,8 @@ public class Scanner {
 			token_pointer++;
 //			current_token[token_pointer] = '\0';
 			String current_token_str = new String(current_token).substring(0, token_pointer);
-			if(fail) {
-				ErrorReporter.markError("Syntax error on identifier " + current_token_str);
+			if(fail && !silent) {
+				ErrorReporter.markError("Syntax error on identifier evaluation3.asm" + current_token_str);
 				return null;
 			}
 			
@@ -208,7 +213,7 @@ public class Scanner {
 				}
 				token_pointer++;
 //				current_token[token_pointer] = '\0';
-				if(fail) {
+				if(fail && !silent) {
 					ErrorReporter.markError("Syntax error on number " + new String(current_token));
 					return null;
 				}
@@ -219,7 +224,21 @@ public class Scanner {
 			while(!(current_token[token_pointer] == '\"' && 
 					current_token[token_pointer-1] != ':')) {
 				readNextChar();
-				if(current_token[token_pointer] == '\0') {
+				if(current_token[token_pointer] == ':') {
+					int i = token_pointer;
+					int j = src_pointer;
+					readNextChar();
+					if(current_token[token_pointer] == ')') {
+						token_pointer = i;
+						src_pointer = j;
+						current_token[token_pointer] = 10;
+						src_pointer++;
+					} else if(current_token[token_pointer] == ':') {
+						token_pointer = i;
+						src_pointer = j + 1;
+					}
+				}
+				if(current_token[token_pointer] == '\0' && !silent) {
 					fail = true;
 					ErrorReporter.markError("Syntax error on string " + new String(current_token) + 
 							". Expected \".");
@@ -259,12 +278,24 @@ public class Scanner {
 	}
 	
 	/**
-	 * returns true if it read the dereference character, false otherwise
+	 * returns true if it reads the dereference character, false otherwise
+	 * @return
+	 */
+	private boolean readArrayAccOp() {
+		if(src_pointer < source.length && source[src_pointer] != '\0' 
+			&& (source[src_pointer] == '.')) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * returns true if it reads the array access character, false otherwise
 	 * @return
 	 */
 	private boolean readDerefOp() {
-		if(src_pointer < source.length && source[src_pointer] != '\0' 
-			&& (source[src_pointer] == '.')) {
+		if(src_pointer+1 < source.length && source[src_pointer] != '\0' && source[src_pointer+1] != '\0'
+			&& (source[src_pointer] == '-') && (source[src_pointer+1] == '>')) {
 			return true;
 		}
 		return false;
@@ -277,12 +308,14 @@ public class Scanner {
 			}
 			src_pointer++;
 		} else {
+			silent = true;
 			while(src_pointer < source.length) {
 				if(lookupToken() instanceof TLDR) {
 					// found the end
 					return;
 				}
 			}
+			silent = false;
 		}
 	}
 	

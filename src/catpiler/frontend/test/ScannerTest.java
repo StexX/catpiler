@@ -134,7 +134,7 @@ public class ScannerTest {
 				Assert.assertTrue(tokens[1] instanceof Identifier);
 				Assert.assertEquals(new String("anotherID"),tokens[1].getAttribute().trim());
 				Assert.assertTrue(tokens[2] instanceof catpiler.frontend.scanner.keywords.String);
-				Assert.assertEquals(new String("\"someStr\""),tokens[2].getAttribute().trim());
+				Assert.assertEquals(new String("someStr"),tokens[2].getAttribute().trim());
 				Assert.assertTrue(tokens[3] instanceof Int);
 				Assert.assertEquals(new String("1337"),tokens[3].getAttribute().trim());
 				Assert.assertTrue(tokens[4] instanceof SAEM);
@@ -696,5 +696,28 @@ public class ScannerTest {
 			fail("No token found :(");
 		}
 	}
+	
+	@Test
+	public void testLinefeed() {
+		Scanner s = new Scanner("\"test:)bla\"");
+		Keyword t = null;
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof catpiler.frontend.scanner.keywords.String);
+			Assert.assertEquals("test\nbla", t.getAttribute());
+		} else {
+			fail("No token found :(");
+		}
+	}
 
+	@Test
+	public void testColon() {
+		Scanner s = new Scanner("\"test::bla\"");
+		Keyword t = null;
+		if((t = s.lookupToken()) != null) {
+			Assert.assertTrue(t instanceof catpiler.frontend.scanner.keywords.String);
+			Assert.assertEquals("test:bla", t.getAttribute());
+		} else {
+			fail("No token found :(");
+		}
+	}
 }

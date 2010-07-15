@@ -4,8 +4,8 @@ import catpiler.utils.ErrorReporter;
 
 public class MemoryManager {
 
-	public final int HEAPBLOCKS = 100;
-	public final int BLOCKSIZE = 256;
+	public final int HEAPBLOCKS = 15;
+	public final int BLOCKSIZE = 32;
 	private String[] addr;
 	private int[] refc;
 	
@@ -22,21 +22,23 @@ public class MemoryManager {
 	public void init() {
 		addr = new String[HEAPBLOCKS];
 		refc = new int[HEAPBLOCKS];
-		
+
+		codeGenerator.put("#begin_mm");
 		for(int i=0; i<HEAPBLOCKS; i++) {
-			codeGenerator.put("ADDI", "$v0", "$r0", "9");
-			codeGenerator.put("ADDI", "$a0", "$r0", new Integer(BLOCKSIZE).toString());
+			codeGenerator.put("addi", "$v0", "$zero", "9");
+			codeGenerator.put("addi", "$a0", "$zero", new Integer(BLOCKSIZE).toString());
 			codeGenerator.put("syscall");
 			
 			String label = "hp" + new Integer(i).toString();
 			codeGenerator.storeData(label, ".space", "4");
 			codeGenerator.put("la", "$t0", label);
 			// indirect addressing
-			codeGenerator.put("sw", "$v0", "$t0");
+			codeGenerator.put("sw", "$v0", "($t0)");
 			
 			addr[i] = label;
 			refc[i] = 0;
 		}
+		codeGenerator.put("#end_mm");
 	}
 	
 	/**
@@ -72,17 +74,22 @@ public class MemoryManager {
 		for(int j=i; j<(blockAmount+i); j++) {
 			refc[j] = 1;
 		}
-		
-		System.out.print("Reference map: ");
-		for(int k=0; k<HEAPBLOCKS; k++) {
-			System.out.print(new Integer(refc[k]).toString() + " ");
-		}
-		System.out.print("\n");
+//		
+//		System.out.print("Reference map: ");
+//		for(int k=0; k<HEAPBLOCKS; k++) {
+//			System.out.print(new Integer(refc[k]).toString() + " ");
+//		}
+//		System.out.print("\n");
 		
 		if(i < HEAPBLOCKS)
 			return i;
 		else
 			return -1;
+	}
+	
+	public void increaseReferenceCount(String start, int size) {
+		int i_start = new Integer(start.substring(2));
+		increaseReferenceCount(i_start, size);
 	}
 	
 	public void increaseReferenceCount(int start, int size) {
@@ -123,10 +130,10 @@ public class MemoryManager {
 			refc[i] = refc[i] - 1;
 		}
 		
-		System.out.print("Reference map: ");
-		for(int k=0; k<HEAPBLOCKS; k++) {
-			System.out.print(new Integer(refc[k]).toString() + " ");
-		}
-		System.out.print("\n");
+//		System.out.print("Reference map: ");
+//		for(int k=0; k<HEAPBLOCKS; k++) {
+//			System.out.print(new Integer(refc[k]).toString() + " ");
+//		}
+//		System.out.print("\n");
 	}
 }
