@@ -60,8 +60,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Description}
 
-(!!!) LOLCODE Anpassung erklären!
-LOLCODE can be categorized as an esoteric programming language, which is under construction since May 2007. The main characteristics are the non-classic way of appointing keywords and prefix instead of infix operators and the optional type definition. 
+LOLCODE can be categorized as an esoteric programming language, which is under construction since May 2007. The main characteristics are the non-classic way of appointing keywords, which will be discussed later, prefix instead of infix operators and the optional type definition. 
+
+The current specification 1.2 does not define array and record handling, and does also not allow to use single characters instead of strings. Thus, to fulfill the classes` requirements, the syntax specification has been slightly adapted.
 
 %%%%%%%%%%%%%%%%%%%% SUBSECTION %%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Syntax}
@@ -289,6 +290,7 @@ The following sections present the target language and code optimizations done b
 
 Although there exist a variety of interpreters and one compiler for the .NET platform, CATpiler is the first compiler for the MIPS32 architecture. If computes instructions in MIPS assembler, which can be interpreted and run on any MIPS simulator. The code has been tested for the MARS assembler and simulator platform\footnote{\url{http://courses.missouristate.edu/KenVollmar/MARS/}}.
 
+Listing \ref{tab:identifier} gives an overview over the instructions that have been used to generate code. During parsing, every module generates code that is finally stored in a text file with the file-ending \textit{.cat}. These files will later be linked into a single MIPS text file.
 
 \begin{table}[h]\scriptsize
 \begin{center}
@@ -309,7 +311,7 @@ and & AND-operation on two registers & $\ \$d = \$s\ \&\&\ \$t \ \ $ & and \$d \
 andi & AND-operation on register and immediate value & $\ \$d = \$s\ \&\&\ i \ \ $ & andi \$d \$s i \\
 or & OR-operation on two registers & $\ \$d = \$s\ ||\ \$t \ \ $ & and \$d \$s \$t \\
 ori & OR-operation on register and immediate value & $\ \$d = \$s\ ||\ i \ \ $ & andi \$d \$s i \\
-sll & Shift left-operation on two registers & $\ \$d = \$s\ ||\ \$t \ \ $ & and \$d \$s \$t \\
+slt & Shift left-operation on two registers & $\ \$d = \$s\ ||\ \$t \ \ $ & and \$d \$s \$t \\
 lw & Loads word from address & $\ \$d = address \ \ $ & lw \$d a \\
 lb & Loads byte from address & $\ \$d = address \ \ $ & lb \$d a \\
 sw & Stores word in address & $\ \$d = address \ \ $ & sw \$d a \\
@@ -329,11 +331,48 @@ jal & Stores pc in \$ra register and jumps to label & & jal label \\
 \end{center}
 \end{table}
 
+%%%%%%%%%%%%%%%%%%%% SUBSECTION %%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Implemented Functionalities}
+
+The following list provides an overview over the implemented functionalities:
+
+\begin{itemize}
+	\item Global and local variable initializations: 
+	\begin{itemize}
+		\item Integer, characters, boolean primitives
+		\item Integer, character and boolean arrays
+		\item Structures: Only accessible within a module
+		\item Automatically created temporary variable \texttt{IT}: Stores the result of the last computation
+		\item Lazy type evaluation: A variable is undefined until explicitly given or until a value is assigned
+	\end{itemize}
+	\item Operations: 
+	\begin{itemize}
+		\item Numeric operations (addition, subtraction, multiplication, division, max and min)
+		\item String compare
+		\item Boolean operations (AND, OR, NOT)
+		\item General operations (equal, not-equal)
+	\end{itemize}
+	\item Flow control: 
+	\begin{itemize}
+		\item Branching (If-Else If-Else)
+		\item Loops (Allows until and while conditions)
+	\end{itemize}
+	\item Functions: 
+	\begin{itemize}
+		\item With parameter handing
+		\item Allow emergency-escape with keyword \textit{"GTFO"}
+		\item Allow return parameters
+	\end{itemize}
+\end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% SECTION %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Memory Management}
+
+Memory Management is important to maintain the memory used by a program. In MIPS, we have an address space of 32 bit. Figure \ref{fig:memlayout} shows the overall memory layout, which is very common in most machines. The memory addresses range from 0x00000000 to 0xffffffff, where 0x00000000 - 0x40000000 and 0x7fffffff - 0xffffffff are reserved for the MIPS OS and the remaining memory is divided into four segments.
+
+The text segment is the part of the memory where our code instructions are stored. Above it, one can find the global data segment for static variables. The heap segment begins on top of the data segment and dynamically grows towards the stack segment, which starts at the top most accessible address 0x7fffffff and shrinks towards the heap segment.
 
 \begin{figure}[h]
   \centering
@@ -342,10 +381,61 @@ jal & Stores pc in \$ra register and jumps to label & & jal label \\
   \label{fig:memlayout}
 \end{figure}
 
+Heap management, which is the process of how we allocate and deallocate memory from the heap segment, varies from target code to target code. The SUN JVM (Java Virtual Machine), for example, uses generational garbage collection to allocate and deallocate heap memory dynamically during runtime, whereas in C the programmer usually has to free the allocated memory explicitly. 
+
+Since the CATpiler produces MIPS code which is not intended to run on a (self-designed) virtual machine, the heap must be managed during compile time. To relieve the programmer from freeing memory explicitly, the compiler provides a method to introduce a kind of region based memory management, which is responsible for allocating and reusing memory when an object expires.
+
+The compiler, therefore, divides the heap memory into regions of a fixed size at the beginning of the program. Currently, only 15 heap blocks of size 32 bits are generated (because of compile time performance reasons), which is sufficient for the tests in the test base. Larger programs may require an adjustment of the heap blocks size.
+
+Since we are unaware of the heap block start address during compile time, static heap identifiers, which will be filled with the heap block start addresses later on, are created and stored in the data segment. Listing \ref{lst:heaplabel} shows a fraction of the data and the text segment that is initially constructed by the memory manager. As one can see, heap memory is allocated by a system call (lines 18 - 20), and the region start address is loaded into the address behind the heap label \texttt{hp0} (lines 21 and 22). 
+
+\lstset{language=xml}
+\lstinputlisting[
+        label=lst:heaplabel,
+        captionpos=b,
+        caption=Code-Fraction for Memory Partioning,
+        numbers=left,
+        frame=single,
+        breaklines=true,
+        basicstyle=\ttfamily\footnotesize,
+        keywordstyle=\bfseries,
+        commentstyle=\itshape,
+        stringstyle=\itshape
+]{code/heaplabel.cat}
+
+The memory manager keeps track of which heap blocks will be in use during program execution. This is done by holding a reference map that contains a count for each memory block. Initially, each memory block holds '0' references. When the program comes to a point where an object requests memory, the memory manager assigns one or multiple free heap blocks to the object and sets a reference counter for each heap block to '1'. 
+
+When an object is provided as a function parameter, it's reference count will be increased before the function is called, and decreased after the function return. Hence, we can keep track of the current memory use in each function, and reuse heap blocks if its reference count equals '0' again.
+
+The problem that might be introduced by reference increasing and decreasing is that reference counts for global objects will be set to '0' as soon as we leave the function which assigned memory, even if the object is still expected to be reachable. This may lead to dangling pointers, since the memory could already be reused. An example for that problem is shown in Listing \ref{lst:danglingPointer}.
+The solution that CATpiler introduces is to keep the reference count for global variable constantly at '1' by skipping count increase and decrease activities.
+
+\lstset{language=xml}
+\lstinputlisting[
+        label=lst:danglingPointer,
+        captionpos=b,
+        caption=Global Variables and the Reference Counting Problem,
+        numbers=left,
+        frame=single,
+        breaklines=true,
+        basicstyle=\ttfamily\footnotesize,
+        keywordstyle=\bfseries,
+        commentstyle=\itshape,
+        stringstyle=\itshape
+]{code/danglingPointer.lol}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% SECTION %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Separate Compilation}
+
+In large software projects it is often necessary to allow separate compilation in order to speed up the compilation time. A change in one module source file should not necessarily lead to a re-compilation of all other modules. For that reason, the CATpiler only compiles those modules that have not been compiled yet or have been explicitly requested for compilation.
+
+When a file is requested for compilation without any additional parameter, all imported modules will be recursively compiled, too (see Figure \ref{fig:recimport}). Every module will generate an own code file with file ending \textit{.cat}. Each compiled module contains meta-information in the header of the MIPS assembler file. The first line is a timestamp that represents the last modification time, the second line contains all functions that are called from within the module, and the third and last line contains all functions that are defined in this module.
+
+The process of how source files are recursively imported and how code is generated is shown in Figure \ref{fig:recimport} and Figure \ref{fig:link}. The file \textit{module2.lol} is the first module that does not contain any further imports. Thus, it is the first to be compiled. \textit{module4.lol} and \textit{module1.lol} follow subsequently. The \textit{main.lol} has another import on \textit{module2.lol}, but it has already been compiled for the last modification, which can be recognized with the help of the timestamp in the header of \textit{module2.cat}. Therefore it is simply skipped. The next imported module is \textit{module3.lol}, which will be compiled into \textit{module2.cat}. \textit{main.lol} is the last file that is compiled. The handling of cyclic imports remain future work. Currently, one would have to separately compile cyclic modules, which can be done by starting the compiled with the attribute \texttt{"-s"}.
+
+When the compilation process is completed, the Linker copies every \texttt{.cat} file into one single MIPS assembler file with the file ending \textit{.asm}. Header meta-data are copied, too, but will be ignored by the MIPS assembler, since these lines start with a comment character. The instructions and data for heap management will only be copied once.
 
 \begin{figure}[h]
   \centering
@@ -369,7 +459,8 @@ jal & Stores pc in \$ra register and jumps to label & & jal label \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% SECTION %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusion}
+%\section{Conclusion}
+
 
 \bibliographystyle{plain}
 \bibliography{catpiler_doc}

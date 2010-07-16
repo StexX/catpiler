@@ -1,0 +1,23 @@
+.data
+hp0: .space 4
+hp1: .space 4
+hp2: .space 4
+hp3: .space 4
+hp4: .space 4
+hp5: .space 4
+hp6: .space 4
+hp7: .space 4
+hp8: .space 4
+hp9: .space 4
+hp10: .space 4
+hp11: .space 4
+hp12: .space 4
+hp13: .space 4
+hp14: .space 4
+.text
+addi $v0 $zero 9
+addi $a0 $zero 32
+syscall
+la $t0 hp0
+sw $v0 ($t0)
+....

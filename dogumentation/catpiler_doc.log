@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2010.4.18)  16 JUL 2010 15:24
+This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2010.4.18)  16 JUL 2010 20:31
 entering extended mode
  %&-line parsing enabled.
 **\nonstopmode \input{catpiler_doc.tex}
@@ -694,7 +694,7 @@ Overfull \hbox (3.07503pt too wide) in paragraph at lines 56--57
  []
 
 
-Overfull \hbox (57.19322pt too wide) in paragraph at lines 73--147
+Overfull \hbox (57.19322pt too wide) in paragraph at lines 74--148
  [] 
  []
 
@@ -704,7 +704,7 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [1
 
 {//var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-Overfull \hbox (28.16061pt too wide) in paragraph at lines 163--216
+Overfull \hbox (28.16061pt too wide) in paragraph at lines 164--217
  [] 
  []
 
@@ -714,58 +714,70 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[2]
-Overfull \hbox (2.00314pt too wide) in paragraph at lines 295--327
+[2] [3]
+Overfull \hbox (2.00314pt too wide) in paragraph at lines 297--329
  [] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<img/mem_layout.pdf, id=90, 495.8525pt x 679.53876pt>
+<img/mem_layout.pdf, id=96, 495.8525pt x 679.53876pt>
 File: img/mem_layout.pdf Graphic file (type pdf)
  <use img/mem_layout.pdf>
-[3] <img/recursive_import.pdf, id=96, 960.58875pt x 498.86375pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[4] (/usr/share/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
+) [5 <./img/mem_layout.pdf>] (./code/heaplabel.cat) (./code/danglingPointer.lol
+ [6])
+<img/recursive_import.pdf, id=148, 960.58875pt x 498.86375pt>
 File: img/recursive_import.pdf Graphic file (type pdf)
 
 <use img/recursive_import.pdf>
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<img/linking.pdf, id=97, 1041.8925pt x 976.64874pt>
+<img/linking.pdf, id=149, 1041.8925pt x 976.64874pt>
 File: img/linking.pdf Graphic file (type pdf)
  <use img/linking.pdf>
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-(./catpiler_doc.bbl) [4 <./img/mem_layout.pdf>] [5 <./img/recursive_import.pdf>
-] [6] [7] [8] [9 <./img/linking.pdf>] (./catpiler_doc.aux)
+(./catpiler_doc.bbl [7]) [8 <./img/recursive_import.pdf>] [9 <./img/linking.pdf
+>] [10] [11] [12] (./catpiler_doc.aux)
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 8074 strings out of 495029
- 115566 string characters out of 1181521
- 241378 words of memory out of 3000000
- 11114 multiletter control sequences out of 10000+50000
- 9017 words of font info for 33 fonts, out of 3000000 for 5000
+ 8485 strings out of 495029
+ 119658 string characters out of 1181521
+ 306584 words of memory out of 3000000
+ 11467 multiletter control sequences out of 10000+50000
+ 9353 words of font info for 35 fonts, out of 3000000 for 5000
  28 hyphenation exceptions out of 8191
- 37i,12n,38p,933b,392s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 37i,12n,49p,1002b,1838s stack positions out of 5000i,500n,10000p,200000b,50000s
 </usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx10.pfb></usr/share/texmf-di
 st/fonts/type1/bluesky/cm/cmbx12.pfb></usr/share/texmf-dist/fonts/type1/bluesky
 /cm/cmbx7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx9.pfb></usr/sha
-re/texmf-dist/fonts/type1/bluesky/cm/cmmi5.pfb></usr/share/texmf-dist/fonts/typ
-e1/bluesky/cm/cmmi7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr10.pfb
-></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr5.pfb></usr/share/texmf-dist/
-fonts/type1/bluesky/cm/cmr6.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/c
-mr7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texm
-f-dist/fonts/type1/bluesky/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/blue
-sky/cm/cmsy7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmti9.pfb></usr/
-share/texmf-dist/fonts/type1/bluesky/cm/cmtt9.pfb>
-Output written on catpiler_doc.pdf (9 pages, 143257 bytes).
+re/texmf-dist/fonts/type1/bluesky/cm/cmitt10.pfb></usr/share/texmf-dist/fonts/t
+ype1/bluesky/cm/cmmi5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmmi7.p
+fb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr10.pfb></usr/share/texmf-di
+st/fonts/type1/bluesky/cm/cmr5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/c
+m/cmr6.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr7.pfb></usr/share/t
+exmf-dist/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/bl
+uesky/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmsy7.pfb></us
+r/share/texmf-dist/fonts/type1/bluesky/cm/cmsy9.pfb></usr/share/texmf-dist/font
+s/type1/bluesky/cm/cmti9.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmtt
+9.pfb>
+Output written on catpiler_doc.pdf (12 pages, 172080 bytes).
 PDF statistics:
- 200 PDF objects out of 1000 (max. 8388607)
- 33 named destinations out of 1000 (max. 131072)
+ 275 PDF objects out of 1000 (max. 8388607)
+ 74 named destinations out of 1000 (max. 131072)
  136 words of extra memory for PDF output out of 10000 (max. 10000000)
 
