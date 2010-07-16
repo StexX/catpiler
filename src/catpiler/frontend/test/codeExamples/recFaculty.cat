@@ -1,4 +1,4 @@
-#1279222504000
+#1279289481000
 #faculty NUMBR,
 #faculty NUMBR,
 .data
@@ -261,7 +261,7 @@ lw $s2 -12($fp)
 lw $s1 -8($fp)
 lw $s0 -4($fp)
 lw $s7 -32($fp)
-mul $v1 $t0 $v1
+mult $v1 $t0 $v1
 move $t1 $v1
 j br2
 br3:

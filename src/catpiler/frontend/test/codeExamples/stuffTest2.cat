@@ -1,4 +1,4 @@
-#1279222504000
+#1279289481000
 #
 #
 .data
@@ -136,7 +136,7 @@ add $v1 $t0 $t9
 lw $v1 ($v1)
 move $t5 $v1
 lw $v1 ($v1)
-mul $v1 $t8 $v1
+mult $v1 $t8 $v1
 addi $v0 $zero 1
 move $a0 $v1
 syscall

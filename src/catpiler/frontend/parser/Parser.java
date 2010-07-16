@@ -442,13 +442,15 @@ public class Parser {
 			return true;
 		} else {
 			// search for the next known source keyword
-			if(!(keyword instanceof KTHXBYE) ||
-					!(keyword instanceof FOUND) ||
-					!(keyword instanceof GTFO) ||
-					!(keyword instanceof HOW) ||
-					!(keyword instanceof OIC) ||
-					!(keyword instanceof IF) ||
-					!(keyword instanceof IM)) {
+			if(!(keyword instanceof KTHXBYE || 
+					keyword instanceof FOUND ||
+					keyword instanceof GTFO ||
+					keyword instanceof HOW ||
+					keyword instanceof OIC ||
+					keyword instanceof IF ||
+					keyword instanceof NO ||
+					keyword instanceof MEBBE ||
+					keyword instanceof IM)) {
 				isStatement(s.lookupToken());
 			}
 			return false;
@@ -2151,7 +2153,7 @@ public class Parser {
 								currentSymboltableEntry.setAttribute(arg1.toString());
 								
 							}
-						} else if(op.equals("muli")) {
+						} else if(op.equals("multi")) {
 							Integer arg1 = new Integer(arg3) * 
 								new Integer(currentSymboltableEntry.getAttribute());
 							
@@ -3012,7 +3014,7 @@ public class Parser {
 						}
 						// calculating array start + offset 
 						// and store it in currentSymboltable-Reg v1
-						codeGenerator.put("muli", right_hand.getReg(), right_hand.getReg(), "4");
+						codeGenerator.put("multi", right_hand.getReg(), right_hand.getReg(), "4");
 						codeGenerator.put("add", "$v1", left_hand.getReg(), right_hand.getReg());
 					}
 				}
