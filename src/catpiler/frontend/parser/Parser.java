@@ -441,6 +441,16 @@ public class Parser {
 		} else if(isFuncCall(keyword)) {
 			return true;
 		} else {
+			// search for the next known source keyword
+			if(!(keyword instanceof KTHXBYE) ||
+					!(keyword instanceof FOUND) ||
+					!(keyword instanceof GTFO) ||
+					!(keyword instanceof HOW) ||
+					!(keyword instanceof OIC) ||
+					!(keyword instanceof IF) ||
+					!(keyword instanceof IM)) {
+				isStatement(s.lookupToken());
+			}
 			return false;
 		}
 	}
@@ -1885,7 +1895,7 @@ public class Parser {
 			else if(keyword instanceof DIFF || keyword instanceof BIGGR || keyword instanceof SMALLR)
 				op = new java.lang.String("sub");
 			else if(keyword instanceof PRODUKT)
-				op = new java.lang.String("mul");
+				op = new java.lang.String("mult");
 			else if(keyword instanceof QUOSHUNT)
 				op = new java.lang.String("div");
 			
