@@ -1,0 +1,7 @@
+\beamer@endinputifotherversion {3.07pt}
+\select@language {german}
+\beamer@sectionintoc {1}{LOLCode - Die Eingabesprache}{2}{0}{1}
+\beamer@sectionintoc {2}{CATpiler}{4}{0}{2}
+\beamer@subsectionintoc {2}{1}{CATpiler - Grundlegendes}{4}{0}{2}
+\beamer@subsectionintoc {2}{2}{Besonderheiten des CATpilers}{5}{0}{2}
+\beamer@sectionintoc {3}{Zus\IeC {\"a}tzliche Informationen}{8}{0}{3}

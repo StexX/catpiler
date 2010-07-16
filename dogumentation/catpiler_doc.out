@@ -1,4 +1,13 @@
 \BOOKMARK [0][-]{chapter.1}{CATpiler}{}
 \BOOKMARK [0][-]{chapter.1}{Stephanie Stroka}{}
-\BOOKMARK [1][-]{section.1.1}{Syntax}{chapter.1}
-\BOOKMARK [1][-]{section.1.2}{EBNF}{chapter.1}
+\BOOKMARK [1][-]{section.1.1}{Language Description}{chapter.1}
+\BOOKMARK [2][-]{subsection.1.1.1}{Syntax}{section.1.1}
+\BOOKMARK [2][-]{subsection.1.1.2}{Parsing}{section.1.1}
+\BOOKMARK [2][-]{subsection.1.1.3}{Attributed Grammar}{section.1.1}
+\BOOKMARK [2][-]{subsection.1.1.4}{Error Handling}{section.1.1}
+\BOOKMARK [1][-]{section.1.2}{Code Generation}{chapter.1}
+\BOOKMARK [2][-]{subsection.1.2.1}{Target Language}{section.1.2}
+\BOOKMARK [1][-]{section.1.3}{Memory Management}{chapter.1}
+\BOOKMARK [1][-]{section.1.4}{Separate Compilation}{chapter.1}
+\BOOKMARK [1][-]{section.1.5}{Testing and Execution}{chapter.1}
+\BOOKMARK [1][-]{section.1.6}{Conclusion}{chapter.1}

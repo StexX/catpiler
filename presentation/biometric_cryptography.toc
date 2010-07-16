@@ -1,0 +1,19 @@
+\beamer@endinputifotherversion {3.07pt}
+\select@language {german}
+\beamer@sectionintoc {1}{Biometrie}{2}{0}{1}
+\beamer@subsectionintoc {1}{1}{Begriffserkl\IeC {\"a}rung}{2}{0}{1}
+\beamer@subsectionintoc {1}{2}{Beispiele}{3}{0}{1}
+\beamer@subsectionintoc {1}{3}{Anwendungsgebiete}{4}{0}{1}
+\beamer@sectionintoc {2}{Biometrische Kryptosysteme}{5}{0}{2}
+\beamer@subsectionintoc {2}{1}{Begriffserkl\IeC {\"a}rung}{5}{0}{2}
+\beamer@subsectionintoc {2}{2}{Hashwert Probleme}{6}{0}{2}
+\beamer@sectionintoc {3}{Fuzzy Cryptography}{7}{0}{3}
+\beamer@subsectionintoc {3}{1}{Begriffserkl\IeC {\"a}rung}{7}{0}{3}
+\beamer@subsectionintoc {3}{2}{Fuzzy Commitment Scheme}{8}{0}{3}
+\beamer@subsectionintoc {3}{3}{Speichervorgang}{9}{0}{3}
+\beamer@subsectionintoc {3}{4}{Verifizierung}{10}{0}{3}
+\beamer@subsectionintoc {3}{5}{Berechnung und Korrektur des Hammingcodes}{11}{0}{3}
+\beamer@subsectionintoc {3}{6}{Fuzzy Vault Scheme}{14}{0}{3}
+\beamer@subsectionintoc {3}{7}{Speichervorgang und Korrektur beim Fuzzy Vault Scheme}{15}{0}{3}
+\beamer@subsectionintoc {3}{8}{Speichervorgang}{16}{0}{3}
+\beamer@sectionintoc {4}{Quellen}{17}{0}{4}

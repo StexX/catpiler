@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2009.12.8)  6 APR 2010 14:35
+This is pdfTeXk, Version 3.1415926-1.40.9 (Web2C 7.5.7) (format=pdflatex 2010.4.18)  16 JUL 2010 15:24
 entering extended mode
  %&-line parsing enabled.
 **\nonstopmode \input{catpiler_doc.tex}
@@ -473,7 +473,6 @@ File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
 (/usr/share/texmf-dist/tex/latex/oberdiek/kvoptions.sty
 Package: kvoptions 2007/10/18 v3.0 Keyval support for LaTeX options (HO)
 )
-Package hyperref Info: Option `draft' set `true' on input line 2765.
 Package hyperref Info: Option `plainpages' set `false' on input line 2765.
 Package hyperref Info: Option `pdfpagelabels' set `true' on input line 2765.
 Package hyperref Info: Hyper figures OFF on input line 2876.
@@ -632,30 +631,30 @@ File: babel.def 2008/07/06 v3.8l Babel common definitions
 ))
 (/usr/share/texmf-dist/tex/latex/babelbib/babelbib.sty
 Package: babelbib 2005/11/13 v1.20 babelbib: multilingual bibliographies (HH)
-) (./catpiler_doc.aux)
+) (./catpiler_doc.aux
+
+LaTeX Warning: Label `tab:identifier' multiply defined.
+
+)
 \openout1 = `catpiler_doc.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
 \c@lstlisting=\count152
-
-
-Package hyperref Warning:  draft mode on.
-
-Package hyperref Info: Link coloring OFF on input line 51.
-(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+Package hyperref Info: Link coloring OFF on input line 52.
+ (/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2007/05/29 v2.31 Cross-referencing by name of section
 
 (/usr/share/texmf-dist/tex/latex/oberdiek/refcount.sty
@@ -663,8 +662,13 @@ Package: refcount 2008/08/11 v3.1 Data extraction from references (HO)
 )
 \c@section@level=\count153
 )
-LaTeX Info: Redefining \ref on input line 51.
-LaTeX Info: Redefining \pageref on input line 51.
+LaTeX Info: Redefining \ref on input line 52.
+LaTeX Info: Redefining \pageref on input line 52.
+ (./catpiler_doc.out)
+(./catpiler_doc.out)
+\@outlinefile=\write4
+\openout4 = `catpiler_doc.out'.
+
 \AtBeginShipoutBox=\box59
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
@@ -684,11 +688,14 @@ Package hyperref Warning: bookmark level for unknown title defaults to 0.
 Package hyperref Warning: bookmark level for unknown author defaults to 0.
 
 
-LaTeX Warning: `h' float specifier changed to `ht'.
+Overfull \hbox (3.07503pt too wide) in paragraph at lines 56--57
+[]\OT1/cmr/m/n/9 This doc-u-ment de-scribes the de-sign and func-tion-al-ity of
+ CAT-
+ []
 
 
-Overfull \hbox (28.16061pt too wide) in paragraph at lines 140--193
- [] |
+Overfull \hbox (57.19322pt too wide) in paragraph at lines 73--147
+ [] 
  []
 
 
@@ -696,28 +703,69 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 
 [1
 
-{//var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3]
-(./catpiler_doc.aux) ) 
+{//var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+Overfull \hbox (28.16061pt too wide) in paragraph at lines 163--216
+ [] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[2]
+Overfull \hbox (2.00314pt too wide) in paragraph at lines 295--327
+ [] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<img/mem_layout.pdf, id=90, 495.8525pt x 679.53876pt>
+File: img/mem_layout.pdf Graphic file (type pdf)
+ <use img/mem_layout.pdf>
+[3] <img/recursive_import.pdf, id=96, 960.58875pt x 498.86375pt>
+File: img/recursive_import.pdf Graphic file (type pdf)
+
+<use img/recursive_import.pdf>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<img/linking.pdf, id=97, 1041.8925pt x 976.64874pt>
+File: img/linking.pdf Graphic file (type pdf)
+ <use img/linking.pdf>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+(./catpiler_doc.bbl) [4 <./img/mem_layout.pdf>] [5 <./img/recursive_import.pdf>
+] [6] [7] [8] [9 <./img/linking.pdf>] (./catpiler_doc.aux)
+
+LaTeX Warning: There were multiply-defined labels.
+
+ ) 
 Here is how much of TeX's memory you used:
- 7970 strings out of 495029
- 114101 string characters out of 1181521
- 226412 words of memory out of 3000000
- 11064 multiletter control sequences out of 10000+50000
- 6388 words of font info for 24 fonts, out of 3000000 for 5000
+ 8074 strings out of 495029
+ 115566 string characters out of 1181521
+ 241378 words of memory out of 3000000
+ 11114 multiletter control sequences out of 10000+50000
+ 9017 words of font info for 33 fonts, out of 3000000 for 5000
  28 hyphenation exceptions out of 8191
- 37i,9n,38p,311b,408s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx12.pfb>
-</usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx7.pfb></usr/share/texmf-dist/
-fonts/type1/bluesky/cm/cmbx9.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/
-cmmi5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmmi7.pfb></usr/share/t
-exmf-dist/fonts/type1/bluesky/cm/cmr10.pfb></usr/share/texmf-dist/fonts/type1/b
-luesky/cm/cmr5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr7.pfb></usr
-/share/texmf-dist/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texmf-dist/fonts/
-type1/bluesky/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmsy7.
-pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmtt9.pfb>
-Output written on catpiler_doc.pdf (3 pages, 71869 bytes).
+ 37i,12n,38p,933b,392s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx10.pfb></usr/share/texmf-di
+st/fonts/type1/bluesky/cm/cmbx12.pfb></usr/share/texmf-dist/fonts/type1/bluesky
+/cm/cmbx7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmbx9.pfb></usr/sha
+re/texmf-dist/fonts/type1/bluesky/cm/cmmi5.pfb></usr/share/texmf-dist/fonts/typ
+e1/bluesky/cm/cmmi7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr10.pfb
+></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr5.pfb></usr/share/texmf-dist/
+fonts/type1/bluesky/cm/cmr6.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/c
+mr7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmr9.pfb></usr/share/texm
+f-dist/fonts/type1/bluesky/cm/cmsy5.pfb></usr/share/texmf-dist/fonts/type1/blue
+sky/cm/cmsy7.pfb></usr/share/texmf-dist/fonts/type1/bluesky/cm/cmti9.pfb></usr/
+share/texmf-dist/fonts/type1/bluesky/cm/cmtt9.pfb>
+Output written on catpiler_doc.pdf (9 pages, 143257 bytes).
 PDF statistics:
- 64 PDF objects out of 1000 (max. 8388607)
- 0 named destinations out of 1000 (max. 131072)
- 17 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 200 PDF objects out of 1000 (max. 8388607)
+ 33 named destinations out of 1000 (max. 131072)
+ 136 words of extra memory for PDF output out of 10000 (max. 10000000)
 
