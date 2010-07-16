@@ -1,4 +1,4 @@
-#1279289481000
+#1279315990000
 #faculty NUMBR,
 #faculty NUMBR,
 .data
@@ -218,14 +218,14 @@ subu $sp $sp 4
 lw $t1 0($fp)
 addi $t1 $zero 1
 li $t2 1
-beq $t0 $t2 br0
+beq $t0 $t2 recFaculty.lolbr0
 addi $v1 $zero 1
-j br1
-br0:
+j recFaculty.lolbr1
+recFaculty.lolbr0:
 add $v1 $zero $zero
-j br1
-br1:
-beq $zero $v1 br3
+j recFaculty.lolbr1
+recFaculty.lolbr1:
+beq $zero $v1 recFaculty.lolbr3
 subi $v1 $t0 1
 move $a0 $v1
 subu $sp $sp 4
@@ -261,16 +261,16 @@ lw $s2 -12($fp)
 lw $s1 -8($fp)
 lw $s0 -4($fp)
 lw $s7 -32($fp)
-mult $v1 $t0 $v1
+mul $v1 $t0 $v1
 move $t1 $v1
-j br2
-br3:
+j recFaculty.lolbr2
+recFaculty.lolbr3:
 addi $t1 $zero 1
 addi $v1 $zero 1
-j br4
-br4:
-j br2
-br2:
+j recFaculty.lolbr4
+recFaculty.lolbr4:
+j recFaculty.lolbr2
+recFaculty.lolbr2:
 move $v1 $t1
 add $sp $zero $fp
 jr $ra

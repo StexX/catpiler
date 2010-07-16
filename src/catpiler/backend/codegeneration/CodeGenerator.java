@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import catpiler.frontend.parser.Parser;
 import catpiler.utils.ErrorReporter;
 
 public class CodeGenerator {
@@ -567,8 +568,8 @@ public class CodeGenerator {
 		System.out.println(msg);
 	}
 	
-	public java.lang.String getBranchLabel() {
-		java.lang.String brLabel1 = "br" + new Integer(branchAndJumpCount).toString();
+	public java.lang.String getBranchLabel(String modulename) {
+		java.lang.String brLabel1 = modulename + "br" + new Integer(branchAndJumpCount).toString();
 		branchAndJumpCount++;
 		return brLabel1;
 	}

@@ -1,4 +1,4 @@
-#1279289481000
+#1279307447000
 #faculty NUMBR,
 #faculty NUMBR,
 .data
@@ -214,14 +214,14 @@ move $a0 $t0
 syscall
 subu $sp $sp 4
 li $t1 1
-beq $t0 $t1 br0
+beq $t0 $t1 recursiveFunctionTest.lolbr0
 addi $v1 $zero 1
-j br1
-br0:
+j recursiveFunctionTest.lolbr1
+recursiveFunctionTest.lolbr0:
 add $v1 $zero $zero
-j br1
-br1:
-beq $zero $v1 br3
+j recursiveFunctionTest.lolbr1
+recursiveFunctionTest.lolbr1:
+beq $zero $v1 recursiveFunctionTest.lolbr3
 subi $v1 $t0 1
 move $a0 $v1
 subu $sp $sp 4
@@ -255,10 +255,10 @@ lw $s2 -12($fp)
 lw $s1 -8($fp)
 lw $s0 -4($fp)
 lw $s7 -32($fp)
-j br2
-br3:
-j br2
-br2:
+j recursiveFunctionTest.lolbr2
+recursiveFunctionTest.lolbr3:
+j recursiveFunctionTest.lolbr2
+recursiveFunctionTest.lolbr2:
 lw $t2 0($fp)
 move $v1 $t2
 add $sp $zero $fp

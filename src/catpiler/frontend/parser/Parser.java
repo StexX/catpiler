@@ -44,7 +44,6 @@ import catpiler.frontend.scanner.keywords.BOTH;
 import catpiler.frontend.scanner.keywords.CAN;
 import catpiler.frontend.scanner.keywords.CHAR;
 import catpiler.frontend.scanner.keywords.CHARZ;
-import catpiler.frontend.scanner.keywords.DIFF;
 import catpiler.frontend.scanner.keywords.DIFFRINT;
 import catpiler.frontend.scanner.keywords.DOWANT;
 import catpiler.frontend.scanner.keywords.DUZ;
@@ -119,6 +118,23 @@ import catpiler.utils.StringLib;
  */
 public class Parser {
 	
+	// GROUP1 = NUMBR, CHAR, TROOF
+	private static final int GROUP1_GROUP_ID = 0x1;
+	private static final int GROUP1_CHECK_ID = 0xFFF9;
+	
+	// GROUP2 = NUMBRZ, CHARZ, TROOFZ
+	private static final int GROUP2_GROUP_ID = 0x2;
+	private static final int GROUP2_CHECK_ID = 0xFFF3;
+	
+	// GROUP3 = SUM, PRODUKT, QUOSHUNT, DIFF, BIGGR, SMALLR
+	private static final int GROUP3_GROUP_ID = 0x04;
+	private static final int GROUP3_CHECK_ID = 0xFFC7;
+
+	
+	// GROUP4 = DIFF, BIGGR, SMALLR
+	private static final int GROUP4_GROUP_ID = 0x0C;
+	private static final int GROUP4_CHECK_ID = 0xFFCF;
+
 	// junit test need scanner to be public
 	public Scanner s = null;
 	
@@ -646,7 +662,7 @@ public class Parser {
 					codeGenerator.put("lw", "$a0", currentSymboltableEntry.getAddress() + "($fp)");
 					codeGenerator.put("lw", "$a0", "($a0)");
 				} else if(currentSymboltableEntry.getCategory().equals("const")) {
-					StringLib.init(codeGenerator, memoryManager);
+					StringLib.init(codeGenerator, memoryManager, this);
 					StringLib.storeString(currentSymboltableEntry);
 					codeGenerator.put("addi", "$v0", "$zero", "4");
 					codeGenerator.put("la", "$a0", currentSymboltableEntry.getHeap());
@@ -1118,8 +1134,8 @@ public class Parser {
 						}
 						
 						// generate code for != or == expression
-						java.lang.String brLabel1 = codeGenerator.getBranchLabel();
-						java.lang.String brLabel2 = codeGenerator.getBranchLabel();
+						java.lang.String brLabel1 = codeGenerator.getBranchLabel(currentModule);
+						java.lang.String brLabel2 = codeGenerator.getBranchLabel(currentModule);
 						if(keyword instanceof BOTH) {
 							codeGenerator.put("bne", ste1.getReg(), ste2.getReg(), brLabel1);
 							codeGenerator.put("addi", "$v1", "$zero", "1");
@@ -1169,7 +1185,7 @@ public class Parser {
 						// TODO: compare strings, number-arrays and boolean-arrays
 						// - strings can be compared as in StringLib.strcmp()
 						// - number- and boolean arrays 
-						StringLib.init(codeGenerator, memoryManager);
+						StringLib.init(codeGenerator, memoryManager, this);
 						StringLib.strCmp(ste1, ste2);
 					}
 				}
@@ -1331,7 +1347,7 @@ public class Parser {
 						skipLoop = true;
 					}
 				} else {
-					branchFixup = codeGenerator.getBranchLabel();
+					branchFixup = codeGenerator.getBranchLabel(currentModule);
 					
 					if(tok instanceof WILE) {
 						// if $v1 = 0 -> skip loop
@@ -1435,7 +1451,7 @@ public class Parser {
 			boolean skipFollowing = false;
 			boolean needFixUp = false;
 			java.lang.String fixupLine = new java.lang.String();
-			java.lang.String jump2End = codeGenerator.getBranchLabel();
+			java.lang.String jump2End = codeGenerator.getBranchLabel(currentModule);
 			
 //			for(java.lang.String sym : symboltable.getHashEntry().keySet()) {
 //				SymboltableEntry ste = symboltable.getHashEntry().get(sym);
@@ -1492,7 +1508,7 @@ public class Parser {
 					skipIf = true;
 				}
 			} else {
-				fixupLine = codeGenerator.getBranchLabel();
+				fixupLine = codeGenerator.getBranchLabel(currentModule);
 				codeGenerator.put("beq", "$zero", "$v1", fixupLine);
 				needFixUp = true;
 			}
@@ -1690,7 +1706,7 @@ public class Parser {
 //						jumpFixupLine = codeGenerator.getPc();
 						codeGenerator.put("j", jump2End);
 					} else {
-						fixupLine = codeGenerator.getBranchLabel();
+						fixupLine = codeGenerator.getBranchLabel(currentModule);
 						codeGenerator.put("j", fixupLine);
 						needFixUp = true;
 					}
@@ -1755,7 +1771,7 @@ public class Parser {
 						}
 					}
 
-					fixupLine = codeGenerator.getBranchLabel();
+					fixupLine = codeGenerator.getBranchLabel(currentModule);
 					codeGenerator.put("j", fixupLine);
 					needFixUp = true;
 				}
@@ -1878,9 +1894,7 @@ public class Parser {
 	}
 	
 	public boolean isNumOp(Keyword keyword) throws ParseException {
-		if(keyword instanceof SUM || keyword instanceof DIFF ||
-				keyword instanceof QUOSHUNT || keyword instanceof PRODUKT ||
-				keyword instanceof BIGGR || keyword instanceof SMALLR) {
+		if((keyword.getNumericID() & GROUP3_CHECK_ID) == GROUP3_GROUP_ID) {
 			
 			if(!(lookAhead() instanceof OF)) {
 				ErrorReporter.markError("Missing 'OF' keyword");
@@ -1894,10 +1908,10 @@ public class Parser {
 			boolean arg2IsConst = false;
 			if(keyword instanceof SUM)
 				op = new java.lang.String("add");
-			else if(keyword instanceof DIFF || keyword instanceof BIGGR || keyword instanceof SMALLR)
+			else if((keyword.getNumericID() & GROUP4_CHECK_ID) == GROUP4_GROUP_ID)
 				op = new java.lang.String("sub");
 			else if(keyword instanceof PRODUKT)
-				op = new java.lang.String("mult");
+				op = new java.lang.String("mul");
 			else if(keyword instanceof QUOSHUNT)
 				op = new java.lang.String("div");
 			
@@ -2004,14 +2018,14 @@ public class Parser {
 						if(keyword instanceof BIGGR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero",  arg3);
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
 							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
 							codeGenerator.put(branchlabel + ":");
@@ -2027,14 +2041,14 @@ public class Parser {
 						if(keyword instanceof BIGGR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
 							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
 							codeGenerator.put(branchlabel + ":");
@@ -2071,14 +2085,14 @@ public class Parser {
 						if(keyword instanceof BIGGR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
 							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
 							codeGenerator.put(branchlabel + ":");
@@ -2098,14 +2112,14 @@ public class Parser {
 						if(keyword instanceof BIGGR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");							
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
 							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg3, "0");
 							codeGenerator.put(branchlabel + ":");
@@ -2153,7 +2167,7 @@ public class Parser {
 								currentSymboltableEntry.setAttribute(arg1.toString());
 								
 							}
-						} else if(op.equals("multi")) {
+						} else if(op.equals("muli")) {
 							Integer arg1 = new Integer(arg3) * 
 								new Integer(currentSymboltableEntry.getAttribute());
 							
@@ -2191,14 +2205,14 @@ public class Parser {
 						if(keyword instanceof BIGGR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");
 							codeGenerator.put(branchlabel + ":");
 						} else if(keyword instanceof SMALLR) {
 							codeGenerator.put("bgtz", currentSymboltableEntry.getReg(), "3");
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), arg2, "0");							
-							java.lang.String branchlabel = codeGenerator.getBranchLabel();
+							java.lang.String branchlabel = codeGenerator.getBranchLabel(currentModule);
 							codeGenerator.put("j", branchlabel);
 							codeGenerator.put("addi", currentSymboltableEntry.getReg(), "$zero", arg3);
 							codeGenerator.put(branchlabel + ":");
@@ -2438,7 +2452,7 @@ public class Parser {
 									ste.setAttribute(null);
 								}
 							} else if(ste.getType().equals(CHARZ.tokenId)) {
-								StringLib.init(codeGenerator, memoryManager);
+								StringLib.init(codeGenerator, memoryManager, this);
 								StringLib.storeString(ste);
 							}
 							
@@ -2937,12 +2951,8 @@ public class Parser {
 	}
 
 	public boolean isType(Keyword keyword) {
-		return (keyword instanceof CHAR ||
-				keyword instanceof NUMBR ||
-				keyword instanceof TROOF ||
-				keyword instanceof CHARZ ||
-				keyword instanceof NUMBRZ ||
-				keyword instanceof TROOFZ ||
+		return ( (keyword.getNumericID() & GROUP1_CHECK_ID) == GROUP1_GROUP_ID ||
+				 (keyword.getNumericID() & GROUP2_CHECK_ID) == GROUP2_GROUP_ID ||
 				symboltable.existsType(keyword.getAttribute()));
 	}
 
@@ -3014,7 +3024,7 @@ public class Parser {
 						}
 						// calculating array start + offset 
 						// and store it in currentSymboltable-Reg v1
-						codeGenerator.put("multi", right_hand.getReg(), right_hand.getReg(), "4");
+						codeGenerator.put("muli", right_hand.getReg(), right_hand.getReg(), "4");
 						codeGenerator.put("add", "$v1", left_hand.getReg(), right_hand.getReg());
 					}
 				}
@@ -3271,7 +3281,7 @@ public class Parser {
 								currentSymboltableEntry.getType().equals(CHAR.tokenId))
 							codeGenerator.put("addi", "$v1", "$zero", currentSymboltableEntry.getAttribute());
 						else if(currentSymboltableEntry.getType().equals(CHARZ.tokenId)) {
-							StringLib.init(codeGenerator, memoryManager);
+							StringLib.init(codeGenerator, memoryManager, this);
 							StringLib.storeString(currentSymboltableEntry);
 							codeGenerator.put("la", "$v1", currentSymboltableEntry.getHeap());
 							currentSymboltableEntry.setReg("$v1");
@@ -3421,36 +3431,64 @@ public class Parser {
 				} catch (ParseException e) {
 					e.printStackTrace();
 				} catch (FileNotFoundException e) {
-					ErrorReporter.markError("File " + filename + " not found :(");
+					ErrorReporter.markError("File " + filename + " not found :(", false);
 				}
 			}
+			modules.add(p.currentPath + p.currentModule.replace(".lol", ".cat"));
 		}
 	}
 	
 	public static void main(java.lang.String[] args) {
 		if(args[0] != null) {
 			
-			if(args[1] != null && args[1].equals("-s")) {
-				Parser.separateCompile = true;
-			} else {
-				Parser.separateCompile = false;
+			java.lang.String outputfile = null;
+			java.lang.String inputfile = null;
+			boolean linkOnly = false;
+			for(int i=0; i<args.length; i++) {
+				if(args[i] != null && args[i].equals("-s")) {
+					Parser.separateCompile = true;
+				} else {
+					Parser.separateCompile = false;
+				}
+				if(args[i] != null && args[i].equals("-l")) {
+					linkOnly = true;
+				}
+				if(args[i] != null && args[i].equals("-o")) {
+					if(args[i+1] != null) {
+						outputfile = args[i+1];
+					}
+				}
+				if(args[i] != null && args[i].equals("-i")) {
+					if(args[i+1] != null) {
+						inputfile = args[i+1];
+					}
+				}
 			}
+			
 			// -l = link only
-			if(args[1] != null && args.equals("-l")) {
+			if(linkOnly) {
 				Set<java.lang.String> sources = new HashSet<java.lang.String>();
 				for(int i=2; i<args.length; i++) {
 					sources.add(args[i]);
 				}
-				Linker.destination = "/home/sstroka/Desktop/main.asm";
+				if(outputfile == null) {
+					Linker.destination = "/home/sstroka/Desktop/main.asm";
+				} else {
+					Linker.destination = outputfile;
+				}
 				Linker.linkSources(sources);
 			} else {
-				Parser.loadSourcecode(args[0]);
+				Parser.loadSourcecode(inputfile);
 				// link only if we do not want to just compile one file
 				// we then need to manually link the sources
 				if(!Parser.separateCompile) {
-					Linker.destination = "/home/sstroka/Desktop/main.asm";
-					Linker.linkSources(Parser.modules);
+					if(outputfile == null) {
+						Linker.destination = "/home/sstroka/Desktop/main.asm";
+					} else {
+						Linker.destination = outputfile;
+					}
 				}
+				Linker.linkSources(modules);
 			}
 		}
 	}

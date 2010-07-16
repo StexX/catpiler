@@ -67,7 +67,7 @@ The current specification 1.2 does not define array and record handling, and doe
 %%%%%%%%%%%%%%%%%%%% SUBSECTION %%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Syntax}
 
-The notion of \textit{non-classic way of appointing keywords} gets clear if we have a look at the language comparision between (pseudo) C and LOLCODE syntax, shown in Listing \ref{tab:syntax}. As one can see, keywords can contain blank characters, or in other words, a keyword may consist of several words. 
+The notion of \textit{non-classic way of appointing keywords} gets clear if we have a look at the language comparision between (pseudo) C and LOLCODE syntax, shown in Table \ref{tab:syntax}. As one can see, keywords can contain blank characters, or in other words, a keyword may consist of several words. 
 
 \begin{table}[h]\scriptsize
 \begin{center}
@@ -153,7 +153,7 @@ $ malloc() $& DOWANT \\
 There are two ways of dealing with multiple-word keywords regarding lexical analysis. The first is that we search for the whole keyword, e.g. \textit{"HOW DUZ I"}, which has the advantage of eliminating ambiguous keyword-tokens like \textit{"I"}. The second one is to scan for each single keyword token, e.g. \textit{"HOW"}, \textit{"DUZ"} and \textit{"I"}, respectively, and leave the "real" keyword determination to the parsing process. The benefit that we get by choosing the second approach is to be able to better deal with literal errors and skipped keyword-tokens. I chose the second approach, which results in checking source code tokens against 73 diverse keyword tokens. 
 Thus, the lexical syntax analysis is the process of checking source code words against 73 deterministic finite automatons (DFA) plus three more DFAs for character strings, integers and identifiers. 
 
-Token scanning is a depth-first search. We, therefore, go through the list of tokens and check the first character of the input string against the first character of the token string. Non-equal characters result in a remove of the token and the checking of the next token. If we found a token that matches the first character, we return it as a candidate token and check the remaining characters. For keywords, which start with equal characters, we may need to revert our choice of the candidate token and chose another one. It may also happen that a source code token starts with the same sequence as keyword token, but exceed the string length and are therefore recognized as identifiers. 
+Token scanning is a depth-first search. We, therefore, go through the list of tokens and check the first character of the input string against the first character of the token string. Non-equal characters result in a remove of the token and the checking of the next token. If we found a token that matches the first character, we return it as a candidate token and check the remaining characters. For keywords, which start with equal characters, we may need to revert our choice of the candidate token and chose another one. It may also happen that a source code token starts with the same sequence as keyword token, but exceeds the string length and are therefore recognized as identifiers. 
 
 
 %%%%%%%%%%%%%%%%%%%% SUBSECTION %%%%%%%%%%%%%%%%%%%%%%%
@@ -182,33 +182,39 @@ $<$GEN\_EXPR$>$ & $::=$ ("BOTH SAEM" $|$ "DIFFRINT") $<$OPERATION$>$ "AN" $<$OPE
 $<$INF\_EXPR$>$ & $::=$ ("ALL OF" $|$ "ANY OF") $<$BOOL\_OP$>$ "AN" $<$BOOL\_OP$>$ \\
  & $::=$ $\lbrace$ "AN" $<$BOOL\_OP$>$ $\rbrace$ "MKAY" . \\
 $<$BI\_EXPR$>$ & $::=$ $<$BOOL\_OP$>$  $|$ $<$GEN\_EXPR$>$ . \\
-$<$EXPR$>$ & $::=$ $<$BI\_EXPR$>$ $|$ $<$INF\_EXPR$>$ $|$ ($<$BOOL$>$$|$ $<$IDENTIFIER$>$) . \\
+$<$EXPR$>$ & $::=$ $<$BI\_EXPR$>$ $|$ $<$INF\_EXPR$>$ $|$ ($<$BOOL$>$$|$ \\ 
+	& (($<$ARRAY\_DEREF$>$ $|$ $<$STRUCT\_DEREF$>$ $|$ $<$IDENTIFIER$>$) $|$ "IT")) . \\
 %$<$IO\_OP$>$ & $::=$ VISIBLE $<$VALUE$>$ $|$ GIMMEH $<$IDENTIFIER$>$ . \\
 $<$BOOL\_OP$>$ & $::=$ (("BOTH OF" $|$ "EITHER OF") $<$EXPR$>$ "AN" $<$EXPR$>$) $|$ \\ 
 		& \qquad("NOT" $<$EXPR$>$) . \\
-$<$STR\_OP$>$ & $::=$ $<$STRING$>$ $|$ $<$IDENTIFIER$>$ . \\ 
+$<$STR\_OP$>$ & $::=$ $<$STRING$>$ $|$ (($<$ARRAY\_DEREF$>$ $|$ $<$STRUCT\_DEREF$>$ $|$ $<$IDENTIFIER$>$) $|$ "IT") . \\ 
 $<$NUM\_OP$>$ & $ ::=$ ("SUM OF" $|$ "DIFF OF" $|$ "PRODUKT OF" $|$ "QUOSHUNT OF" $|$ \\ 
 		& \qquad "BIGGR OF" $|$ "SMALLR OF") $<$NUM\_OP$>$ "AN" $<$NUM\_OP$>$ $|$ \\
-		& \qquad ($<$NUM$>$ $|$ $<$IDENTIFIER$>$) . \\
+		& \qquad ($<$NUM$>$ $|$ (($<$ARRAY\_DEREF$>$ $|$ $<$STRUCT\_DEREF$>$ $|$ $<$IDENTIFIER$>$) $|$ "IT")) . \\
 $<$OPERATION$>$ & $ ::=$ $<$NUM\_OP$>$ $|$ $<$BOOL\_OP$>$ $|$ $<$STR\_OP$>$ . \\
 $<$VAR\_INIT$>$ & $::=$ "I HAS A" $<$IDENTIFIER$>$ . \\
-$<$VAR\_DECL$>$ & $::=$ $<$IDENTIFIER$>$ "IS NOW A" $<$TYPE$>$ . \\
-$<$VAR\_ASSIGN$>$ & $::=$ $<$IDENTIFIER$>$ "R" $<$OPERATION$>$ . \\
+$<$VAR\_DECL$>$ & $::=$ ($<$ARRAY\_DEREF$>$ $|$ $<$STRUCT\_DEREF$>$ $|$ $<$IDENTIFIER$>$) "IS NOW A" \\ 
+		& ($<$TYPE$>$ $|$ $<$IDENTIFIER$>$) . \\
+$<$VAR\_ASSIGN$>$ & $::=$ ($<$ARRAY\_DEREF$>$ $|$ $<$STRUCT\_DEREF$>$ $|$ $<$IDENTIFIER$>$) "R" $<$OPERATION$>$ . \\
 $<$IF$>$ & $::=$ $<$EXPR$>$ ORLY? YA RLY $\lbrace$ $<$STATEMENT$>$ $\rbrace$ \\ 
 		& \qquad $\lbrace$ MEBBE $<$EXPR$>$ $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $\rbrace$ \\
 		& \qquad $[$ NO WAI $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $]$ $\rbrace$ OIC . \\
 $<$LOOP$>$ & $ ::=$ "IM IN YR" $<$IDENTIFIER$>$ $[$YR $<$IDENTIFIER$>$ $]$ $[$WILE$|$TIL $<$EXPR$>$ $]$ \\ 
 		& \qquad $\lbrace$ $<$STATEMENT$>$ $\rbrace$ "IM OUTTA YR" $<$IDENTIFIER$>$ . \\
 $<$FLOW\_CONTROL$>$ & $ ::=$ $<$IF$>$ $|$ $<$LOOP$>$ . \\
-$<$FUNC\_CALL$>$ & $ ::=$ $<$IDENTIFIER$>$ $\lbrace$ $<$EXPR$>$ $\rbrace$ . \\
+$<$FUNC\_CALL$>$ & $ ::=$ "CAN U" $<$IDENTIFIER$>$ $\lbrace$ $<$EXPR$>$ $\rbrace$ "?" . \\
+$<$PRINT$>$ & $ ::=$ "VISIBLE" $<$IDENTIFIER$>$ \\ 
+$<$GET$>$ & $ ::=$ "GIMMEH" $<$IDENTIFIER$>$ \\ 
 $<$STATEMENT$>$ & $ ::=$ $<$VAR\_INIT$>$ $|$ $<$VAR\_DECL$>$ $|$ $<$VAR\_ASSIGN$>$ $|$ $<$OPERATION$>$ $|$ \\
-		& \qquad $<$FLOW\_CONTROL$>$ $|$ $<$FUNC\_CALL$>$ . \\
+		& \qquad $<$FLOW\_CONTROL$>$ $|$ $<$FUNC\_CALL$>$ $|$ $<$PRINT$>$ $|$ $<$GET$>$ . \\
 $<$FUNCTION$>$ & $ ::=$ "HOW DUZ I" $<$IDENTIFIER$>$ \\ 
 		& \qquad $[$YR $<$IDENTIFIER$>$ $\lbrace$AN YR $<$IDENTIFIER$>$ $\rbrace$ $]$ \\ 
 		& \qquad $\lbrace$ $<$STATEMENT$>$ $\rbrace$ $\lbrace$ "FOUND YR" $<$EXPR$>$ $|$ "GTFO"$\rbrace$ \\
 		& \qquad "IF YOU SAY SO" . \\
 $<$MODULE$>$ & $::=$ "CAN HAS" $<$IDENTIFIER$>$ "?" . \\
-$<$STRUCT$>$ & $::=$ "STUFF" $\lbrace$ $<$VAR\_INIT$>$ "THATSIT" . \\
+$<$ARRAY\_DEREF$>$ & $::=$ $<$IDENTIFIER$>$"."$<$IDENTIFIER$>$ . \\
+$<$STRUCT\_DEREF$>$ & $::=$ $<$IDENTIFIER$>$"$\rightarrow$"($<$STRUCT\_DEREF$>$ $|$ $<$IDENTFIER$>$ $|$ $<$ARRAY\_DEREF$>$ ) . \\
+$<$STRUCT$>$ & $::=$ "STUFF" $<$IDENTIFIER$>$ $\lbrace$ $<$VAR\_INIT$>$ $|$ $<$VAR\_DECL$>$ "THATSIT" . \\
 $<$MAIN$>$ & $::=$ "HAI" $\lbrace$ $<$STATEMENT$>$ $\rbrace$ "KTHXBYE" . \\
 $<$PROGRAMM$>$ & $::=$ $\lbrace$ $<$MODULE$>$ $\rbrace$ $\lbrace$ $<$STRUCT$>$ $\rbrace$ $[$ $<$MAIN$>$ $]$ $\lbrace$ $<$FUNCTION$>$ $\rbrace$ . \\
 
@@ -290,7 +296,7 @@ The following sections present the target language and code optimizations done b
 
 Although there exist a variety of interpreters and one compiler for the .NET platform, CATpiler is the first compiler for the MIPS32 architecture. If computes instructions in MIPS assembler, which can be interpreted and run on any MIPS simulator. The code has been tested for the MARS assembler and simulator platform\footnote{\url{http://courses.missouristate.edu/KenVollmar/MARS/}}.
 
-Listing \ref{tab:identifier} gives an overview over the instructions that have been used to generate code. During parsing, every module generates code that is finally stored in a text file with the file-ending \textit{.cat}. These files will later be linked into a single MIPS text file.
+Table \ref{tab:identifier} gives an overview over the instructions that have been used to generate code. During parsing, every module generates code that is finally stored in a text file with the file-ending \textit{.cat}. These files will later be linked into a single MIPS text file.
 
 \begin{table}[h]\scriptsize
 \begin{center}
@@ -354,14 +360,21 @@ The following list provides an overview over the implemented functionalities:
 	\end{itemize}
 	\item Flow control: 
 	\begin{itemize}
-		\item Branching (If-Else If-Else)
+		\item Branching (If-ElseIf-Else)
 		\item Loops (Allows until and while conditions)
+		\item No code generation for branches and loops that are never reached when condition evaluates into a constant variable
+		\item Branch labels are generated during compilation (br1, br2, br3...) and are used for flow control \textit{fixup}
 	\end{itemize}
 	\item Functions: 
 	\begin{itemize}
 		\item With parameter handing
 		\item Allow emergency-escape with keyword \textit{"GTFO"}
 		\item Allow return parameters
+	\end{itemize}
+	\item I/O Operations: 
+	\begin{itemize}
+		\item Print for strings and integers
+		\item Getline for strings and integers
 	\end{itemize}
 \end{itemize}
 
@@ -405,7 +418,7 @@ Since we are unaware of the heap block start address during compile time, static
 
 The memory manager keeps track of which heap blocks will be in use during program execution. This is done by holding a reference map that contains a count for each memory block. Initially, each memory block holds '0' references. When the program comes to a point where an object requests memory, the memory manager assigns one or multiple free heap blocks to the object and sets a reference counter for each heap block to '1'. 
 
-When an object is provided as a function parameter, it's reference count will be increased before the function is called, and decreased after the function return. Hence, we can keep track of the current memory use in each function, and reuse heap blocks if its reference count equals '0' again.
+When an object is provided as a function parameter, its reference count will be increased before the function is called, and decreased after the function return. Hence, we can keep track of the current memory use in each function, and reuse heap blocks if its reference count equals '0' again.
 
 The problem that might be introduced by reference increasing and decreasing is that reference counts for global objects will be set to '0' as soon as we leave the function which assigned memory, even if the object is still expected to be reachable. This may lead to dangling pointers, since the memory could already be reused. An example for that problem is shown in Listing \ref{lst:danglingPointer}.
 The solution that CATpiler introduces is to keep the reference count for global variable constantly at '1' by skipping count increase and decrease activities.

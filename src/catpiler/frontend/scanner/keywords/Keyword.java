@@ -1,12 +1,28 @@
 package catpiler.frontend.scanner.keywords;
 
-public abstract class Keyword {
+public class Keyword {
 	
 	public final static int KEYWORDCOUNT = 56;
+	protected int numericId = Integer.MAX_VALUE;
 	
-	public abstract void setAttribute(java.lang.String attribute);
+	protected Keyword() {
+	}
+	
+	public void setAttribute(java.lang.String attribute) {
+		System.err.println("Must not be called");
+	};
 
-	public abstract java.lang.String getAttribute();
+	public java.lang.String getAttribute() {
+		System.err.println("Must not be called");
+		return null;
+	}
 	
-	public abstract java.lang.String getTokenID();
+	public java.lang.String getTokenID() {
+		return this.getClass().getSimpleName();
+	}
+	
+	public int getNumericID() {
+		return numericId;
+	}
+	
 }

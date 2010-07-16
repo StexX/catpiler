@@ -1,4 +1,4 @@
-#1279289480000
+#1279307447000
 #fibonacci NUMBR,
 #fibonacci NUMBR,
 .data
@@ -259,14 +259,14 @@ move $a0 $t2
 syscall
 j calulateFib
 calulateFib: 
-bne $t3 $t0 br0
+bne $t3 $t0 testReturnValue.lolbr0
 addi $v1 $zero 1
-j br1
-br0:
+j testReturnValue.lolbr1
+testReturnValue.lolbr0:
 add $v1 $zero $zero
-j br1
-br1:
-bgtz $v1 br2
+j testReturnValue.lolbr1
+testReturnValue.lolbr1:
+bgtz $v1 testReturnValue.lolbr2
 addi $v1 $t3 1
 move $t3 $v1
 subu $sp $sp 4
@@ -289,7 +289,7 @@ addi $v0 $zero 1
 move $a0 $t4
 syscall
 j calulateFib
-br2:
+testReturnValue.lolbr2:
 addi $v1 $zero 0
 add $sp $zero $fp
 jr $ra

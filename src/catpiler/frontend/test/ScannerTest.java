@@ -28,6 +28,7 @@ import catpiler.frontend.scanner.keywords.A;
 import catpiler.frontend.scanner.keywords.ALL;
 import catpiler.frontend.scanner.keywords.AN;
 import catpiler.frontend.scanner.keywords.ANY;
+import catpiler.frontend.scanner.keywords.ArrayAccessOp;
 import catpiler.frontend.scanner.keywords.BIGGR;
 import catpiler.frontend.scanner.keywords.BOTH;
 import catpiler.frontend.scanner.keywords.CHARZ;
@@ -685,7 +686,7 @@ public class ScannerTest {
 			fail("No token found :(");
 		}
 		if((t = s.lookupToken()) != null) {
-			Assert.assertTrue(t instanceof DerefOperator);
+			Assert.assertTrue(t instanceof ArrayAccessOp);
 		} else {
 			fail("No token found :(");
 		}

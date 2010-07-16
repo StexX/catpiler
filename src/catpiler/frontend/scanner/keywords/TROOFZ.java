@@ -1,11 +1,14 @@
 package catpiler.frontend.scanner.keywords;
 
-
 public class TROOFZ extends Keyword {
 
 	public final static java.lang.String tokenId = "TROOFZ";
-	
 	private java.lang.String attribute;
+
+	public TROOFZ() {
+		numericId = 0xA; //1010
+	}
+	
 	
 	@Override
 	public java.lang.String getAttribute() {
@@ -15,10 +18,5 @@ public class TROOFZ extends Keyword {
 	@Override
 	public void setAttribute(java.lang.String attribute) {
 		this.attribute = attribute;
-	}
-	
-	@Override
-	public java.lang.String getTokenID() {
-		return TROOFZ.tokenId;
 	}
 }

@@ -2,6 +2,7 @@ package catpiler.utils;
 
 import catpiler.backend.codegeneration.CodeGenerator;
 import catpiler.backend.codegeneration.MemoryManager;
+import catpiler.frontend.parser.Parser;
 import catpiler.frontend.parser.symboltable.SymboltableEntry;
 import catpiler.frontend.scanner.keywords.CHARZ;
 
@@ -11,9 +12,12 @@ public class StringLib {
 	
 	private static MemoryManager memoryManager;
 	
-	public static void init(CodeGenerator codeGenerator, MemoryManager memoryManager) {
+	private static Parser parser;
+	
+	public static void init(CodeGenerator codeGenerator, MemoryManager memoryManager, Parser parser) {
 		StringLib.codeGenerator = codeGenerator;
 		StringLib.memoryManager = memoryManager;
+		StringLib.parser = parser;
 	}
 	
 	/**
@@ -69,10 +73,10 @@ public class StringLib {
 		String oneByteStr1 = codeGenerator.loadByte(string1.getReg());
 		String oneByteStr2 = codeGenerator.loadByte(string2.getReg());
 		// getbranchlabel
-		String bl1 = codeGenerator.getBranchLabel();
-		String bl2 = codeGenerator.getBranchLabel();
-		String bl3 = codeGenerator.getBranchLabel();
-		String bl4 = codeGenerator.getBranchLabel();
+		String bl1 = codeGenerator.getBranchLabel(parser.currentModule);
+		String bl2 = codeGenerator.getBranchLabel(parser.currentModule);
+		String bl3 = codeGenerator.getBranchLabel(parser.currentModule);
+		String bl4 = codeGenerator.getBranchLabel(parser.currentModule);
 		codeGenerator.put("beq", oneByteStr1, "$zero", bl1);
 		codeGenerator.put("beq", oneByteStr2, "$zero", bl2);
 		String tmp = codeGenerator.getNextFreeTemporary();

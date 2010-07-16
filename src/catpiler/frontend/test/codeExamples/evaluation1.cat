@@ -1,4 +1,4 @@
-#1279289481000
+#1279308230000
 #
 #
 .data
@@ -142,26 +142,26 @@ sb $zero ($t6)
 strcmploop_:
 lb $t8 ($t2)
 lb $t9 ($t5)
-beq $t8 $zero br0
-beq $t9 $zero br1
+beq $t8 $zero evaluation1.lolbr0
+beq $t9 $zero evaluation1.lolbr1
 move $t3 $t5
 slt $t4 $t8 $t9
-bnez $t4 br1
+bnez $t4 evaluation1.lolbr1
 slt $t4 $t9 $t8
-bne $t4 $zero br1
+bne $t4 $zero evaluation1.lolbr1
 addi $t2 $t2 1
 addi $t5 $t5 1
 j strcmploop_
-br0:
-beq $t9 $zero br2
-j br1
-br1:
+evaluation1.lolbr0:
+beq $t9 $zero evaluation1.lolbr2
+j evaluation1.lolbr1
+evaluation1.lolbr1:
 addi $v1 $zero 0
-j br3
-br2:
+j evaluation1.lolbr3
+evaluation1.lolbr2:
 addi $v1 $zero 1
-br3:
-beq $zero $v1 br5
+evaluation1.lolbr3:
+beq $zero $v1 evaluation1.lolbr5
 la $t5 hp2
 lw $t5 ($t5)
 addi $t6 $zero 115
@@ -220,8 +220,8 @@ addi $v0 $zero 4
 la $a0 hp2
 lw $a0 ($a0)
 syscall
-j br4
-br5:
+j evaluation1.lolbr4
+evaluation1.lolbr5:
 la $t7 hp3
 lw $t7 ($t7)
 addi $t8 $zero 115
@@ -292,10 +292,10 @@ addi $v0 $zero 4
 la $a0 hp3
 lw $a0 ($a0)
 syscall
-j br6
-br6:
-j br4
-br4:
+j evaluation1.lolbr6
+evaluation1.lolbr6:
+j evaluation1.lolbr4
+evaluation1.lolbr4:
 add $sp $zero $fp
 addi $v0 $zero 10
 syscall

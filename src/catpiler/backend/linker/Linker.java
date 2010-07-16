@@ -3,7 +3,6 @@ package catpiler.backend.linker;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ public class Linker {
 			new FunctionAccessManager();
 		
 		try {
+			
 			for(String s : files) {
 				File f = new File(s);
 				Scanner scanner = new Scanner(f);
@@ -95,53 +95,72 @@ public class Linker {
 		boolean dataSection = false;
 		boolean textSection = false;
 		boolean mmSection = false;
+		boolean mainSection = false;
 		try {
 			File program = new File(destination);
 			// write every character from the single files 
 			// into the final program file
 			BufferedWriter writer = new BufferedWriter(new FileWriter(program));
-			for(String f : files) {
-				File file = new File(f);
-				try {
-					Scanner scanner = new Scanner(file);
-					while(scanner.hasNextLine()) {
-						String line = scanner.nextLine();
-						if(line.startsWith(".data")) {
-							dataSection = true;
-							textSection = false;
-						} else if(line.startsWith(".text")) {
-							dataSection = false;
-							textSection = true;
-						} else {
-							if(dataSection) {
-								if(!dataSegmentList.contains(line))
-									dataSegmentList.add(line);
-							} else if(textSection) {
-								
-								if(line.equals("#begin_mm")) {
-									// hacking my way through the world ;)
-									if(!mmSection) {
-										
-										while(scanner.hasNextLine() && 
-												!(line = scanner.nextLine()).equals("#end_mm")) {
+			for(int i=0; i<2; i++) {
+				if(i==1) {
+					mainSection = true;
+				}
+				for(String f : files) {
+					File file = new File(f);
+					try {
+						Scanner scanner = new Scanner(file);
+						while(scanner.hasNextLine()) {
+							String line = scanner.nextLine();
+							if(line.startsWith(".data")) {
+								dataSection = true;
+								textSection = false;
+							} else if(line.startsWith(".text")) {
+								dataSection = false;
+								textSection = true;
+							} else {
+								if(dataSection) {
+									if(!dataSegmentList.contains(line))
+										dataSegmentList.add(line);
+								} else if(textSection) {
+									
+									if(line.equals("#begin_mm")) {
+										// hacking my way through the world ;)
+										if(!mmSection) {
+											while(scanner.hasNextLine() && 
+													!(line = scanner.nextLine()).equals("#end_mm")) {
+												if(i != 1)
+												{
+													textSegmentList.add(line);
+												}
+											}
+											mmSection = true;
+										} else {
+											// skip mm section
+											while(scanner.hasNextLine() && 
+													!(line = scanner.nextLine()).equals("#end_mm"));
+										}
+									} else {
+										if(i == 0) {
+											if(line.startsWith("main:")) {
+												mainSection = true;
+											}
+										} else {
+											if(line.startsWith("main:")) {
+												mainSection = false;
+											}
+										}
+										if(mainSection) {
 											textSegmentList.add(line);
 										}
-										mmSection = true;
-									} else {
-										// skip mm section
-										while(scanner.hasNextLine() && 
-												!(line = scanner.nextLine()).equals("#end_mm"));
 									}
-								} else {
-									textSegmentList.add(line);
 								}
 							}
 						}
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 			

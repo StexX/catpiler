@@ -3,6 +3,10 @@ package catpiler.frontend.scanner.keywords;
 public class BIGGR extends Keyword {
 
 	public final static java.lang.String tokenId = "BIGGR";
+
+	public BIGGR() {
+		numericId = 0x1C; // 0001 1100
+	}
 	
 	private java.lang.String attribute;
 
@@ -16,8 +20,4 @@ public class BIGGR extends Keyword {
 		this.attribute = attribute;
 	}
 	
-	@Override
-	public java.lang.String getTokenID() {
-		return BIGGR.tokenId;
-	}
 }

@@ -2,7 +2,7 @@
     I HAS A arg
     arg IS NOW A NUMBR
     GIMMEH arg
-    VISIBLE "calculating faculty of "
+    VISIBLE "counting backwards from "
     VISIBLE arg
     VISIBLE ": "
     I HAS A returnValue
